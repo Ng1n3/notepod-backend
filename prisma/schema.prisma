@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(uuid())
+  username String @unique
+  email String @unique
+  password String
+  note Note[]
+  passwords Password[]
+  todos Todos[]
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("users")
+  @@index([username], map: "quick_search_users")
+}
+
+model Note {
+  id String @id @default(uuid())
+  title String? @unique @db.VarChar(256)
+  body String?
+  isDeleted Boolean @default(false)
+  user User @relation(fields: [userId], references: [id], onUpdate:Cascade, onDelete: Cascade )
+  userId String
+  deletedAt DateTime?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("notes")
+  @@index([title, body], map:"quick_search_note")
+}
+
+model Todos {
+  id String @id @default(uuid())
+  title String?
+  body String?
+  isDeleted Boolean @default(false)
+  priority Int @default(1)
+  user User @relation(fields: [userId], references: [id], onUpdate:Cascade, onDelete: Cascade )
+  userId String
+  deletedAt DateTime?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("todos")
+  @@index([title, body], map:"quick_search_todos")
+}
+
+
+model Password {
+  id String @id @default(uuid())
+  fieldname String @unique
+  email String
+  password String
+  isDeleted Boolean @default(false)
+  user User @relation(fields: [userId], references: [id], onUpdate:Cascade, onDelete: Cascade )
+  userId String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  
+  @@map("password")
+  @@index([fieldname, email], map:"quick_search_password_email")
+}
