@@ -48,7 +48,7 @@ model Todos {
   title String?
   body String?
   isDeleted Boolean @default(false)
-  priority Int @default(1)
+  priority Priority @default(LOW)
   user User @relation(fields: [userId], references: [id], onUpdate:Cascade, onDelete: Cascade )
   userId String
   deletedAt DateTime?
@@ -59,6 +59,12 @@ model Todos {
   @@index([title, body], map:"quick_search_todos")
 }
 
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
 
 model Password {
   id String @id @default(uuid())
