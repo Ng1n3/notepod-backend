@@ -1,16 +1,49 @@
-import express, { Application } from 'express'
-import dotenv from 'dotenv'
-import config from './config'
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServer } from '@apollo/server';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import express, { Application, Request, Response } from 'express';
 
-dotenv.config()
-const app: Application = express()
-app.use(express.json())
-const PORT: string = process.env.PORT!
+import config from './config';
+import { getMyPrismaClient } from './db';
+import { getSchema } from './graphql/Schema';
+import { Mycontext } from './interfaces';
 
-const main = () => {
+dotenv.config();
+const app: Application = express();
+const PORT: string = process.env.PORT!;
+
+const main = async () => {
+  const schema = getSchema();
+  const prisma = await getMyPrismaClient();
+
+  const server = new ApolloServer<Mycontext>({
+    schema,
+  });
+
+  await server.start();
+  app.use(
+    '/graphql',
+    cors(),
+    express.json(),
+    expressMiddleware(server, {
+      context: async ({
+        req,
+        res,
+      }: {
+        req: Request;
+        res: Response;
+      }): Promise<Mycontext> => ({ req, res, prisma }),
+    })
+  );
+
   app.listen(PORT, () => {
-    console.log(`Server is listening on http://localhost:${config.port}/graphql`)
-  })
-}
+    console.log(
+      `Server is listening on http://localhost:${config.port}/graphql`
+    );
+  });
+};
 
-main();
+main().catch((err) => {
+  console.error(err)
+})
