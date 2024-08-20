@@ -1,11 +1,11 @@
-import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
+import RedisStore from 'connect-redis';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { Application, Request, Response } from 'express';
-import { Redis } from 'ioredis';
 import session from 'express-session';
-import RedisStore from 'connect-redis'
+import { Redis } from 'ioredis';
 
 import config from './config';
 import { getMyPrismaClient } from './db';
@@ -15,23 +15,25 @@ import { isProd } from './util';
 
 dotenv.config();
 const app: Application = express();
-const RedisClient = new Redis()
+const RedisClient = new Redis();
 const PORT: string = process.env.PORT!;
-app.use(express.json())
+app.use(express.json());
 
-app.use(session({
-  store: new RedisStore({client: RedisClient}),
-  secret: process.env.SESSION_SECRET!,
-  name: 'notepod-api',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24,
-    secure: isProd(),
-    sameSite: 'lax',
-  }
-}))
+app.use(
+  session({
+    store: new RedisStore({ client: RedisClient }),
+    secret: process.env.SESSION_SECRET!,
+    name: 'notepod-api',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24,
+      secure: isProd(),
+      sameSite: 'lax',
+    },
+  })
+);
 
 const main = async () => {
   const schema = getSchema();
@@ -53,7 +55,13 @@ const main = async () => {
       }: {
         req: Request;
         res: Response;
-      }): Promise<Mycontext> => ({ req, res, prisma }),
+      }): Promise<Mycontext> => ({
+        req,
+        res,
+        prisma,
+        session: req.session,
+        redis: RedisClient,
+      }),
     })
   );
 
@@ -65,5 +73,5 @@ const main = async () => {
 };
 
 main().catch((err) => {
-  console.error(err)
-})
+  console.error(err);
+});

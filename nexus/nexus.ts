@@ -92,6 +92,7 @@ export interface NexusGenFieldTypes {
     createUser: boolean | null; // Boolean
     deleteUser: boolean | null; // Boolean
     loginUser: boolean | null; // Boolean
+    logoutUser: boolean | null; // Boolean
     updateUser: boolean | null; // Boolean
   }
   NoteType: { // field return type
@@ -150,6 +151,7 @@ export interface NexusGenFieldTypeNames {
     createUser: 'Boolean'
     deleteUser: 'Boolean'
     loginUser: 'Boolean'
+    logoutUser: 'Boolean'
     updateUser: 'Boolean'
   }
   NoteType: { // field return type name
