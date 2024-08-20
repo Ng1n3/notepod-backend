@@ -1,5 +1,6 @@
-import { list, queryType } from 'nexus';
-import { Mycontext } from '../interfaces';
+import { intArg, list, queryType } from 'nexus';
+import { ROWS_LIMIT } from '../constants';
+import { Icursor, Mycontext } from '../interfaces';
 import { GetAllUsers } from './types/GetAllUsers';
 
 export const Query = queryType({
@@ -10,8 +11,13 @@ export const Query = queryType({
     });
     t.field('getUsers', {
       type: list(GetAllUsers),
-      resolve: async (_, __, { prisma }: Mycontext) => {
+      args: {
+        cursor: intArg(),
+      },
+      resolve: async (_, { cursor }: Icursor, { prisma }: Mycontext) => {
         const users = await prisma.user.findMany({
+          take: ROWS_LIMIT,
+          skip: cursor,
           select: {
             id: true,
             email: true,

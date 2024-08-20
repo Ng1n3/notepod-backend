@@ -12,3 +12,5 @@ export const verifyPassword = async (
   const isCorrect = await argon.verify(dbPassword, inputPassword);
   return isCorrect;
 };
+
+export const isProd = () => process.env.NODE_ENV === 'production'

@@ -33,7 +33,7 @@ type PasswordType {
 }
 
 type Query {
-  getUsers: [user]
+  getUsers(cursor: Int): [user]
   hello: String
 }
 

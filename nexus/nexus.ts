@@ -222,6 +222,11 @@ export interface NexusGenArgTypes {
       password?: string | null; // String
     }
   }
+  Query: {
+    getUsers: { // args
+      cursor?: number | null; // Int
+    }
+  }
 }
 
 export interface NexusGenAbstractTypeMembers {
