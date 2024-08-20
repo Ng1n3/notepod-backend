@@ -28,7 +28,53 @@ export interface NexusGenScalars {
 }
 
 export interface NexusGenObjects {
+  Mutation: {};
+  NoteType: { // root type
+    body?: string | null; // String
+    createdAt?: number | null; // Float
+    deletedAt?: number | null; // Float
+    id?: string | null; // String
+    isDeleted?: boolean | null; // Boolean
+    title?: string | null; // String
+    updatedAt?: number | null; // Float
+    user?: NexusGenRootTypes['UserType'] | null; // UserType
+  }
+  PasswordType: { // root type
+    createdAt?: number | null; // Float
+    deletedAt?: number | null; // Float
+    email?: string | null; // String
+    fieldname?: string | null; // String
+    id?: string | null; // String
+    isDeleted?: boolean | null; // Boolean
+    password?: string | null; // String
+    updatedAt?: number | null; // Float
+    user?: NexusGenRootTypes['UserType'] | null; // UserType
+  }
   Query: {};
+  TodoType: { // root type
+    body?: string | null; // String
+    createdAt?: number | null; // Float
+    deletedAt?: number | null; // Float
+    id?: string | null; // String
+    isDeleted?: boolean | null; // Boolean
+    priority?: string | null; // String
+    title?: string | null; // String
+    updatedAt?: number | null; // Float
+    user?: NexusGenRootTypes['UserType'] | null; // UserType
+  }
+  UserType: { // root type
+    email?: string | null; // String
+    id?: string | null; // String
+    note?: Array<NexusGenRootTypes['NoteType'] | null> | null; // [NoteType]
+    password?: Array<NexusGenRootTypes['PasswordType'] | null> | null; // [PasswordType]
+    todo?: Array<NexusGenRootTypes['TodoType'] | null> | null; // [TodoType]
+    username?: string | null; // String
+  }
+  user: { // root type
+    email?: string | null; // String
+    id?: string | null; // String
+    username?: string | null; // String
+  }
 }
 
 export interface NexusGenInterfaces {
@@ -42,18 +88,123 @@ export type NexusGenRootTypes = NexusGenObjects
 export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
 
 export interface NexusGenFieldTypes {
+  Mutation: { // field return type
+    createUser: boolean | null; // Boolean
+  }
+  NoteType: { // field return type
+    body: string | null; // String
+    createdAt: number | null; // Float
+    deletedAt: number | null; // Float
+    id: string | null; // String
+    isDeleted: boolean | null; // Boolean
+    title: string | null; // String
+    updatedAt: number | null; // Float
+    user: NexusGenRootTypes['UserType'] | null; // UserType
+  }
+  PasswordType: { // field return type
+    createdAt: number | null; // Float
+    deletedAt: number | null; // Float
+    email: string | null; // String
+    fieldname: string | null; // String
+    id: string | null; // String
+    isDeleted: boolean | null; // Boolean
+    password: string | null; // String
+    updatedAt: number | null; // Float
+    user: NexusGenRootTypes['UserType'] | null; // UserType
+  }
   Query: { // field return type
+    getUsers: Array<NexusGenRootTypes['user'] | null> | null; // [user]
     hello: string | null; // String
+  }
+  TodoType: { // field return type
+    body: string | null; // String
+    createdAt: number | null; // Float
+    deletedAt: number | null; // Float
+    id: string | null; // String
+    isDeleted: boolean | null; // Boolean
+    priority: string | null; // String
+    title: string | null; // String
+    updatedAt: number | null; // Float
+    user: NexusGenRootTypes['UserType'] | null; // UserType
+  }
+  UserType: { // field return type
+    email: string | null; // String
+    id: string | null; // String
+    note: Array<NexusGenRootTypes['NoteType'] | null> | null; // [NoteType]
+    password: Array<NexusGenRootTypes['PasswordType'] | null> | null; // [PasswordType]
+    todo: Array<NexusGenRootTypes['TodoType'] | null> | null; // [TodoType]
+    username: string | null; // String
+  }
+  user: { // field return type
+    email: string | null; // String
+    id: string | null; // String
+    username: string | null; // String
   }
 }
 
 export interface NexusGenFieldTypeNames {
+  Mutation: { // field return type name
+    createUser: 'Boolean'
+  }
+  NoteType: { // field return type name
+    body: 'String'
+    createdAt: 'Float'
+    deletedAt: 'Float'
+    id: 'String'
+    isDeleted: 'Boolean'
+    title: 'String'
+    updatedAt: 'Float'
+    user: 'UserType'
+  }
+  PasswordType: { // field return type name
+    createdAt: 'Float'
+    deletedAt: 'Float'
+    email: 'String'
+    fieldname: 'String'
+    id: 'String'
+    isDeleted: 'Boolean'
+    password: 'String'
+    updatedAt: 'Float'
+    user: 'UserType'
+  }
   Query: { // field return type name
+    getUsers: 'user'
     hello: 'String'
+  }
+  TodoType: { // field return type name
+    body: 'String'
+    createdAt: 'Float'
+    deletedAt: 'Float'
+    id: 'String'
+    isDeleted: 'Boolean'
+    priority: 'String'
+    title: 'String'
+    updatedAt: 'Float'
+    user: 'UserType'
+  }
+  UserType: { // field return type name
+    email: 'String'
+    id: 'String'
+    note: 'NoteType'
+    password: 'PasswordType'
+    todo: 'TodoType'
+    username: 'String'
+  }
+  user: { // field return type name
+    email: 'String'
+    id: 'String'
+    username: 'String'
   }
 }
 
 export interface NexusGenArgTypes {
+  Mutation: {
+    createUser: { // args
+      email?: string | null; // String
+      password?: string | null; // String
+      username?: string | null; // String
+    }
+  }
 }
 
 export interface NexusGenAbstractTypeMembers {

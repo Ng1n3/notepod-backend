@@ -14,49 +14,49 @@ datasource db {
 }
 
 model User {
-  id String @id @default(uuid())
-  username String @unique
-  email String @unique
-  password String
-  note Note[]
+  id        String     @id @default(uuid())
+  username  String     @unique
+  email     String     @unique
+  password  String
+  note      Note[]
   passwords Password[]
-  todos Todos[]
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  todos     Todos[]
+  createdAt DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @db.Timestamptz(6)
 
-  @@map("users")
   @@index([username], map: "quick_search_users")
+  @@map("users")
 }
 
 model Note {
-  id String @id @default(uuid())
-  title String? @unique @db.VarChar(256)
-  body String?
-  isDeleted Boolean @default(false)
-  user User @relation(fields: [userId], references: [id], onUpdate:Cascade, onDelete: Cascade )
-  userId String
+  id        String    @id @default(uuid())
+  title     String?   @unique @db.VarChar(256)
+  body      String?
+  isDeleted Boolean   @default(false)
+  user      User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  userId    String
   deletedAt DateTime?
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
 
+  @@index([title, body], map: "quick_search_note")
   @@map("notes")
-  @@index([title, body], map:"quick_search_note")
 }
 
 model Todos {
-  id String @id @default(uuid())
-  title String?
-  body String?
-  isDeleted Boolean @default(false)
-  priority Priority @default(LOW)
-  user User @relation(fields: [userId], references: [id], onUpdate:Cascade, onDelete: Cascade )
-  userId String
+  id        String    @id @default(uuid())
+  title     String?
+  body      String?
+  isDeleted Boolean   @default(false)
+  priority  Priority  @default(LOW)
+  user      User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  userId    String
   deletedAt DateTime?
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
 
+  @@index([title, body], map: "quick_search_todos")
   @@map("todos")
-  @@index([title, body], map:"quick_search_todos")
 }
 
 enum Priority {
@@ -67,16 +67,17 @@ enum Priority {
 }
 
 model Password {
-  id String @id @default(uuid())
-  fieldname String @unique
-  email String
-  password String
-  isDeleted Boolean @default(false)
-  user User @relation(fields: [userId], references: [id], onUpdate:Cascade, onDelete: Cascade )
-  userId String
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
-  
+  id        String    @id @default(uuid())
+  fieldname String?   @unique
+  email     String?
+  password  String?
+  deletedAt DateTime?
+  isDeleted Boolean   @default(false)
+  user      User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  userId    String
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+
+  @@index([fieldname, email], map: "quick_search_password_email")
   @@map("password")
-  @@index([fieldname, email], map:"quick_search_password_email")
 }

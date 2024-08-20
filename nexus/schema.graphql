@@ -2,6 +2,61 @@
 ### Do not make changes to this file directly
 
 
+type Mutation {
+  createUser(email: String, password: String, username: String): Boolean
+}
+
+type NoteType {
+  body: String
+  createdAt: Float
+  deletedAt: Float
+  id: String
+  isDeleted: Boolean
+  title: String
+  updatedAt: Float
+  user: UserType
+}
+
+type PasswordType {
+  createdAt: Float
+  deletedAt: Float
+  email: String
+  fieldname: String
+  id: String
+  isDeleted: Boolean
+  password: String
+  updatedAt: Float
+  user: UserType
+}
+
 type Query {
+  getUsers: [user]
   hello: String
+}
+
+type TodoType {
+  body: String
+  createdAt: Float
+  deletedAt: Float
+  id: String
+  isDeleted: Boolean
+  priority: String
+  title: String
+  updatedAt: Float
+  user: UserType
+}
+
+type UserType {
+  email: String
+  id: String
+  note: [NoteType]
+  password: [PasswordType]
+  todo: [TodoType]
+  username: String
+}
+
+type user {
+  email: String
+  id: String
+  username: String
 }

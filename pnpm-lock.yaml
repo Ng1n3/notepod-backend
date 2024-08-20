@@ -53,6 +53,9 @@ importers:
       prisma:
         specifier: ^5.18.0
         version: 5.18.0
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
     devDependencies:
       '@types/body-parser':
         specifier: ^1.19.5
@@ -1022,6 +1025,9 @@ packages:
 
   yallist@4.0.0:
     resolution: {integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==}
+
+  zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
 
 snapshots:
 
@@ -2049,3 +2055,5 @@ snapshots:
       cssfilter: 0.0.10
 
   yallist@4.0.0: {}
+
+  zod@3.23.8: {}
