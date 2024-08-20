@@ -4,6 +4,9 @@
 
 type Mutation {
   createUser(email: String, password: String, username: String): Boolean
+  deleteUser(id: String): Boolean
+  loginUser(password: String, username: String): Boolean
+  updateUser(id: String, password: String): Boolean
 }
 
 type NoteType {

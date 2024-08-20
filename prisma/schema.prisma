@@ -15,8 +15,8 @@ datasource db {
 
 model User {
   id        String     @id @default(uuid())
-  username  String     @unique
-  email     String     @unique
+  username  String     @unique @db.VarChar(256)
+  email     String     @unique @db.VarChar(256)
   password  String
   note      Note[]
   passwords Password[]
@@ -45,7 +45,7 @@ model Note {
 
 model Todos {
   id        String    @id @default(uuid())
-  title     String?
+  title     String?   @db.VarChar(256)
   body      String?
   isDeleted Boolean   @default(false)
   priority  Priority  @default(LOW)
@@ -68,8 +68,8 @@ enum Priority {
 
 model Password {
   id        String    @id @default(uuid())
-  fieldname String?   @unique
-  email     String?
+  fieldname String?   @unique @db.VarChar(256)
+  email     String?   @db.VarChar(256)
   password  String?
   deletedAt DateTime?
   isDeleted Boolean   @default(false)

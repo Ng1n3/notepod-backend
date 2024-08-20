@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "password" ADD COLUMN     "deletedAt" TIMESTAMP(3),
+ALTER COLUMN "fieldname" DROP NOT NULL,
+ALTER COLUMN "email" DROP NOT NULL,
+ALTER COLUMN "password" DROP NOT NULL;

@@ -90,6 +90,9 @@ export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
 export interface NexusGenFieldTypes {
   Mutation: { // field return type
     createUser: boolean | null; // Boolean
+    deleteUser: boolean | null; // Boolean
+    loginUser: boolean | null; // Boolean
+    updateUser: boolean | null; // Boolean
   }
   NoteType: { // field return type
     body: string | null; // String
@@ -145,6 +148,9 @@ export interface NexusGenFieldTypes {
 export interface NexusGenFieldTypeNames {
   Mutation: { // field return type name
     createUser: 'Boolean'
+    deleteUser: 'Boolean'
+    loginUser: 'Boolean'
+    updateUser: 'Boolean'
   }
   NoteType: { // field return type name
     body: 'String'
@@ -203,6 +209,17 @@ export interface NexusGenArgTypes {
       email?: string | null; // String
       password?: string | null; // String
       username?: string | null; // String
+    }
+    deleteUser: { // args
+      id?: string | null; // String
+    }
+    loginUser: { // args
+      password?: string | null; // String
+      username?: string | null; // String
+    }
+    updateUser: { // args
+      id?: string | null; // String
+      password?: string | null; // String
     }
   }
 }
