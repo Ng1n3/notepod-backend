@@ -28,8 +28,8 @@ export const ZodNote = z.object({
     .nullable()
     .optional(),
   body: z.string().optional(),
-  isDeleted: z.boolean().default(false),
-  userId: z.string().uuid(),
+  isDeleted: z.boolean().default(false).optional(),
+  userId: z.string().uuid().optional(),
   deletedAt: z.date().nullable().optional(),
 });
 

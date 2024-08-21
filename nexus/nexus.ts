@@ -89,10 +89,13 @@ export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
 
 export interface NexusGenFieldTypes {
   Mutation: { // field return type
+    createNote: boolean | null; // Boolean
     createUser: boolean | null; // Boolean
+    deleteNote: boolean | null; // Boolean
     deleteUser: boolean | null; // Boolean
     loginUser: boolean | null; // Boolean
     logoutUser: boolean | null; // Boolean
+    updateNote: boolean | null; // Boolean
     updateUser: boolean | null; // Boolean
   }
   NoteType: { // field return type
@@ -117,7 +120,8 @@ export interface NexusGenFieldTypes {
     user: NexusGenRootTypes['UserType'] | null; // UserType
   }
   Query: { // field return type
-    getUsers: Array<NexusGenRootTypes['user'] | null> | null; // [user]
+    getNotes: Array<NexusGenRootTypes['NoteType'] | null> | null; // [NoteType]
+    getUsers: Array<NexusGenRootTypes['UserType'] | null> | null; // [UserType]
     hello: string | null; // String
   }
   TodoType: { // field return type
@@ -148,10 +152,13 @@ export interface NexusGenFieldTypes {
 
 export interface NexusGenFieldTypeNames {
   Mutation: { // field return type name
+    createNote: 'Boolean'
     createUser: 'Boolean'
+    deleteNote: 'Boolean'
     deleteUser: 'Boolean'
     loginUser: 'Boolean'
     logoutUser: 'Boolean'
+    updateNote: 'Boolean'
     updateUser: 'Boolean'
   }
   NoteType: { // field return type name
@@ -176,7 +183,8 @@ export interface NexusGenFieldTypeNames {
     user: 'UserType'
   }
   Query: { // field return type name
-    getUsers: 'user'
+    getNotes: 'NoteType'
+    getUsers: 'UserType'
     hello: 'String'
   }
   TodoType: { // field return type name
@@ -207,10 +215,19 @@ export interface NexusGenFieldTypeNames {
 
 export interface NexusGenArgTypes {
   Mutation: {
+    createNote: { // args
+      body?: string | null; // String
+      deletedAt?: string | null; // String
+      isDeleted?: boolean | null; // Boolean
+      title?: string | null; // String
+    }
     createUser: { // args
       email?: string | null; // String
       password?: string | null; // String
       username?: string | null; // String
+    }
+    deleteNote: { // args
+      id?: string | null; // String
     }
     deleteUser: { // args
       id?: string | null; // String
@@ -219,12 +236,22 @@ export interface NexusGenArgTypes {
       password?: string | null; // String
       username?: string | null; // String
     }
+    updateNote: { // args
+      body?: string | null; // String
+      deletedAt?: string | null; // String
+      id?: string | null; // String
+      isDeleted?: boolean | null; // Boolean
+      title?: string | null; // String
+    }
     updateUser: { // args
       id?: string | null; // String
       password?: string | null; // String
     }
   }
   Query: {
+    getNotes: { // args
+      cursor?: number | null; // Int
+    }
     getUsers: { // args
       cursor?: number | null; // Int
     }

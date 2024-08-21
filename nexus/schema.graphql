@@ -3,10 +3,13 @@
 
 
 type Mutation {
+  createNote(body: String, deletedAt: String, isDeleted: Boolean, title: String): Boolean
   createUser(email: String, password: String, username: String): Boolean
+  deleteNote(id: String): Boolean
   deleteUser(id: String): Boolean
   loginUser(password: String, username: String): Boolean
   logoutUser: Boolean
+  updateNote(body: String, deletedAt: String, id: String, isDeleted: Boolean, title: String): Boolean
   updateUser(id: String, password: String): Boolean
 }
 
@@ -34,7 +37,8 @@ type PasswordType {
 }
 
 type Query {
-  getUsers(cursor: Int): [user]
+  getNotes(cursor: Int): [NoteType]
+  getUsers(cursor: Int): [UserType]
   hello: String
 }
 
