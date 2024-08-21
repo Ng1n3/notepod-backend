@@ -116,7 +116,7 @@ export const noteMutation = (t: any) => {
         });
 
         return !!updatedNote;
-      } catch (error) {
+      } catch (error) { 
         console.error(error);
         return false;
       }

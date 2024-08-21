@@ -12,12 +12,14 @@ import { getMyPrismaClient } from './db';
 import { getSchema } from './graphql/Schema';
 import { Mycontext } from './interfaces';
 import { isProd } from './util';
+import morgan from 'morgan';
 
 dotenv.config();
 const app: Application = express();
 const RedisClient = new Redis();
 const PORT: string = process.env.PORT!;
 app.use(express.json());
+app.use(morgan('dev'))
 
 app.use(
   session({

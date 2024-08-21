@@ -1,10 +1,12 @@
 import { intArg, list, queryType } from 'nexus';
+
 import { NOT_AUTHENTICATED, ROWS_LIMIT } from '../constants';
 import { Icursor, Mycontext } from '../interfaces';
 // import { GetAllUsers } from './types/GetAllUsers';
 import { isAuthenticated } from '../util';
 import { NoteType } from './types/NoteTypes';
 import { UserType } from './types/UserTypes';
+import { TodoType } from './types/TodoTypes';
 
 export const Query = queryType({
   definition(t) {
@@ -60,7 +62,8 @@ export const Query = queryType({
             title: true,
             body: true,
             isDeleted: true,
-            deletedAt: true
+            deletedAt: true,
+            user: true,
           }
         })
 
@@ -69,12 +72,50 @@ export const Query = queryType({
           title: note.title,
           body: note.body,
           isDeleted: note.isDeleted,
-          deletedAt: note.deletedAt
+          deletedAt: note.deletedAt,
+          user: note.user,
         }))
           
         } catch (error) {
           console.error(error);
           return false
+        }
+      }
+    })
+    t.list.field('getTodos', {
+      type: TodoType,
+      args: {
+        cursor: intArg()
+      },
+      resolve: async(_:unknown, {cursor}: Icursor, context: Mycontext) => {
+        try {
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        const todos = await context.prisma.todos.findMany({
+          take: ROWS_LIMIT,
+          skip: cursor,
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            priority: true,
+            isDeleted: true,
+            deletedAt: true,
+            user: true
+          }
+        })
+
+        return todos.map(todo => ({
+          id: todo.id,
+          title: todo.title,
+          body: todo.body,
+          isDeleted: todo.isDeleted,
+          deletedAt: todo.deletedAt,
+          priority: todo.priority,
+          user: todo.user
+        }))
+        } catch (error) {
+          console.error(error)
+          return false;
         }
       }
     })
