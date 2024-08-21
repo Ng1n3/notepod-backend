@@ -90,14 +90,17 @@ export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
 export interface NexusGenFieldTypes {
   Mutation: { // field return type
     createNote: boolean | null; // Boolean
+    createPassword: boolean | null; // Boolean
     createTodo: boolean | null; // Boolean
     createUser: boolean | null; // Boolean
     deleteNote: boolean | null; // Boolean
     deleteTodo: boolean | null; // Boolean
     deleteUser: boolean | null; // Boolean
+    deletedPassword: boolean | null; // Boolean
     loginUser: boolean | null; // Boolean
     logoutUser: boolean | null; // Boolean
     updateNote: boolean | null; // Boolean
+    updatePassword: boolean | null; // Boolean
     updateTodo: boolean | null; // Boolean
     updateUser: boolean | null; // Boolean
   }
@@ -124,6 +127,7 @@ export interface NexusGenFieldTypes {
   }
   Query: { // field return type
     getNotes: Array<NexusGenRootTypes['NoteType'] | null> | null; // [NoteType]
+    getPasswordField: Array<NexusGenRootTypes['PasswordType'] | null> | null; // [PasswordType]
     getTodos: Array<NexusGenRootTypes['TodoType'] | null> | null; // [TodoType]
     getUsers: Array<NexusGenRootTypes['UserType'] | null> | null; // [UserType]
     hello: string | null; // String
@@ -157,14 +161,17 @@ export interface NexusGenFieldTypes {
 export interface NexusGenFieldTypeNames {
   Mutation: { // field return type name
     createNote: 'Boolean'
+    createPassword: 'Boolean'
     createTodo: 'Boolean'
     createUser: 'Boolean'
     deleteNote: 'Boolean'
     deleteTodo: 'Boolean'
     deleteUser: 'Boolean'
+    deletedPassword: 'Boolean'
     loginUser: 'Boolean'
     logoutUser: 'Boolean'
     updateNote: 'Boolean'
+    updatePassword: 'Boolean'
     updateTodo: 'Boolean'
     updateUser: 'Boolean'
   }
@@ -191,6 +198,7 @@ export interface NexusGenFieldTypeNames {
   }
   Query: { // field return type name
     getNotes: 'NoteType'
+    getPasswordField: 'PasswordType'
     getTodos: 'TodoType'
     getUsers: 'UserType'
     hello: 'String'
@@ -229,6 +237,11 @@ export interface NexusGenArgTypes {
       isDeleted?: boolean | null; // Boolean
       title?: string | null; // String
     }
+    createPassword: { // args
+      email?: string | null; // String
+      fieldname?: string | null; // String
+      password?: string | null; // String
+    }
     createTodo: { // args
       body?: string | null; // String
       title?: string | null; // String
@@ -247,6 +260,9 @@ export interface NexusGenArgTypes {
     deleteUser: { // args
       id?: string | null; // String
     }
+    deletedPassword: { // args
+      id?: string | null; // String
+    }
     loginUser: { // args
       password?: string | null; // String
       username?: string | null; // String
@@ -257,6 +273,14 @@ export interface NexusGenArgTypes {
       id?: string | null; // String
       isDeleted?: boolean | null; // Boolean
       title?: string | null; // String
+    }
+    updatePassword: { // args
+      deletedAt?: string | null; // String
+      email?: string | null; // String
+      fieldname?: string | null; // String
+      id?: string | null; // String
+      isDeleted?: string | null; // String
+      password?: string | null; // String
     }
     updateTodo: { // args
       body?: string | null; // String
@@ -273,6 +297,9 @@ export interface NexusGenArgTypes {
   }
   Query: {
     getNotes: { // args
+      cursor?: number | null; // Int
+    }
+    getPasswordField: { // args
       cursor?: number | null; // Int
     }
     getTodos: { // args

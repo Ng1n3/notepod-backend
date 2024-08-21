@@ -4,14 +4,17 @@
 
 type Mutation {
   createNote(body: String, deletedAt: String, isDeleted: Boolean, title: String): Boolean
+  createPassword(email: String, fieldname: String, password: String): Boolean
   createTodo(body: String, title: String): Boolean
   createUser(email: String, password: String, username: String): Boolean
   deleteNote(id: String): Boolean
   deleteTodo(id: String): Boolean
   deleteUser(id: String): Boolean
+  deletedPassword(id: String): Boolean
   loginUser(password: String, username: String): Boolean
   logoutUser: Boolean
   updateNote(body: String, deletedAt: String, id: String, isDeleted: Boolean, title: String): Boolean
+  updatePassword(deletedAt: String, email: String, fieldname: String, id: String, isDeleted: String, password: String): Boolean
   updateTodo(body: String, deletedAt: String, id: String, isDeleted: String, priority: String, title: String): Boolean
   updateUser(id: String, password: String): Boolean
 }
@@ -41,6 +44,7 @@ type PasswordType {
 
 type Query {
   getNotes(cursor: Int): [NoteType]
+  getPasswordField(cursor: Int): [PasswordType]
   getTodos(cursor: Int): [TodoType]
   getUsers(cursor: Int): [UserType]
   hello: String

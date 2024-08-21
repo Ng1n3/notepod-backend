@@ -7,6 +7,7 @@ import { isAuthenticated } from '../util';
 import { NoteType } from './types/NoteTypes';
 import { UserType } from './types/UserTypes';
 import { TodoType } from './types/TodoTypes';
+import { PasswordType } from './types/PasswordTypes';
 
 export const Query = queryType({
   definition(t) {
@@ -116,6 +117,43 @@ export const Query = queryType({
         } catch (error) {
           console.error(error)
           return false;
+        }
+      }
+    })
+    t.list.field('getPasswordField', {
+      type: PasswordType,
+      args: {
+        cursor: intArg()
+      },
+      resolve: async(_:unknown, {cursor}: Icursor, context: Mycontext) => {
+        try {
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          const passwordFields = await context.prisma.password.findMany({
+            take: ROWS_LIMIT,
+            skip: cursor,
+            select: {
+              id: true,
+              fieldname: true,
+              email: true,
+              password: true,
+              isDeleted: true,
+              deletedAt: true,
+              user: true,
+            }
+          })
+
+          return passwordFields.map(field => ({
+            id: field.id,
+            fieldname: field.fieldname,
+            email: field.email,
+            password: field.password,
+            isDeleted: field.isDeleted,
+            deletedAt: field.deletedAt,
+            user: field.user
+          }))
+        } catch (error) {
+          console.error(error)
+          return false
         }
       }
     })
