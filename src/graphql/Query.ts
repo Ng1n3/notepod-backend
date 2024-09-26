@@ -1,9 +1,11 @@
 import { intArg, list, queryType } from 'nexus';
 
-import { NOT_AUTHENTICATED, ROWS_LIMIT } from '../constants';
+import { 
+  // NOT_AUTHENTICATED, 
+  ROWS_LIMIT } from '../constants';
 import { Icursor, Mycontext } from '../interfaces';
 // import { GetAllUsers } from './types/GetAllUsers';
-import { isAuthenticated } from '../util';
+// import { isAuthenticated } from '../util';
 import { NoteType } from './types/NoteTypes';
 import { UserType } from './types/UserTypes';
 import { TodoType } from './types/TodoTypes';
@@ -22,7 +24,7 @@ export const Query = queryType({
       },
       resolve: async (_, { cursor }: Icursor, context: Mycontext) => {
         try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
 
           const users = await context.prisma.user.findMany({
             take: ROWS_LIMIT,
@@ -54,7 +56,7 @@ export const Query = queryType({
       },
       resolve: async(_:unknown, {cursor}: Icursor, context: Mycontext) => {
         try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         const notes = await context.prisma.note.findMany({
           take: ROWS_LIMIT,
           skip: cursor,
@@ -90,7 +92,7 @@ export const Query = queryType({
       },
       resolve: async(_:unknown, {cursor}: Icursor, context: Mycontext) => {
         try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         const todos = await context.prisma.todos.findMany({
           take: ROWS_LIMIT,
           skip: cursor,
@@ -127,7 +129,7 @@ export const Query = queryType({
       },
       resolve: async(_:unknown, {cursor}: Icursor, context: Mycontext) => {
         try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
           const passwordFields = await context.prisma.password.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
