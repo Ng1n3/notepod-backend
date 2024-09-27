@@ -40,6 +40,7 @@ export const noteMutation = (t: any) => {
 
         if (!validation.success) throw new Error(INVALID_CREDENTIALS);
 
+        const userId = context.session.userId || 'temp-user-id';
         // if (!context.session.userId)
         //   throw new Error('User Id is required to create a note');
 
@@ -49,7 +50,7 @@ export const noteMutation = (t: any) => {
             body,
             isDeleted: isDeleted ?? false,
             deletedAt: deletedAt ? new Date(deletedAt) : null,
-            userId: context.session.userId,
+            userId,
           },
           select: { id: true },
         });

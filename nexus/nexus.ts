@@ -4,9 +4,23 @@
  */
 
 
-
-
-
+import type { core } from "nexus"
+declare global {
+  interface NexusGenCustomInputMethods<TypeName extends string> {
+    /**
+     * A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+     */
+    dateTime<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "DateTime";
+  }
+}
+declare global {
+  interface NexusGenCustomOutputMethods<TypeName extends string> {
+    /**
+     * A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+     */
+    dateTime<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "DateTime";
+  }
+}
 
 
 declare global {
@@ -25,18 +39,19 @@ export interface NexusGenScalars {
   Float: number
   Boolean: boolean
   ID: string
+  DateTime: any
 }
 
 export interface NexusGenObjects {
   Mutation: {};
   NoteType: { // root type
     body?: string | null; // String
-    createdAt?: number | null; // Float
-    deletedAt?: number | null; // Float
+    createdAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    deletedAt?: NexusGenScalars['DateTime'] | null; // DateTime
     id?: string | null; // String
     isDeleted?: boolean | null; // Boolean
     title?: string | null; // String
-    updatedAt?: number | null; // Float
+    updatedAt?: NexusGenScalars['DateTime'] | null; // DateTime
     user?: NexusGenRootTypes['UserType'] | null; // UserType
   }
   PasswordType: { // root type
@@ -106,12 +121,12 @@ export interface NexusGenFieldTypes {
   }
   NoteType: { // field return type
     body: string | null; // String
-    createdAt: number | null; // Float
-    deletedAt: number | null; // Float
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    deletedAt: NexusGenScalars['DateTime'] | null; // DateTime
     id: string | null; // String
     isDeleted: boolean | null; // Boolean
     title: string | null; // String
-    updatedAt: number | null; // Float
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
     user: NexusGenRootTypes['UserType'] | null; // UserType
   }
   PasswordType: { // field return type
@@ -177,12 +192,12 @@ export interface NexusGenFieldTypeNames {
   }
   NoteType: { // field return type name
     body: 'String'
-    createdAt: 'Float'
-    deletedAt: 'Float'
+    createdAt: 'DateTime'
+    deletedAt: 'DateTime'
     id: 'String'
     isDeleted: 'Boolean'
     title: 'String'
-    updatedAt: 'Float'
+    updatedAt: 'DateTime'
     user: 'UserType'
   }
   PasswordType: { // field return type name

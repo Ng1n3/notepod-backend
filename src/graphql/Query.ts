@@ -56,7 +56,6 @@ export const Query = queryType({
       },
       resolve: async (_: unknown, { cursor }: Icursor, context: Mycontext) => {
         try {
-          console.log("RAW notes from database");
           // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
           const notes = await context.prisma.note.findMany({
             take: ROWS_LIMIT,
@@ -71,6 +70,7 @@ export const Query = queryType({
               user: true,
             },
           });
+              console.log("RAW notes from database", notes);
 
 
           return notes.map((note) => ({
