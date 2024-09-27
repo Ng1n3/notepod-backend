@@ -31,6 +31,7 @@ export const ZodNote = z.object({
   isDeleted: z.boolean().default(false).optional(),
   userId: z.string().uuid().optional(),
   deletedAt: z.date().nullable().optional(),
+  updatedAt: z.date().nullable().optional()
 });
 
 export const ZodTodo = z.object({
