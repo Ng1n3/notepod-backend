@@ -9,8 +9,11 @@ import {
 import { Mycontext } from '../../interfaces';
 // import { isAuthenticated } from '../../util';
 import { ZodNote } from '../validator/schema';
+
+const FIXED_USER_ID = '5bece35b-8d4b-4d81-beb0-a13c406a0da3';
 export const noteMutation = (t: any) => {
-  t.boolean('createNote', {
+  t.field('createNote', {
+    type: 'NoteType',
     args: {
       title: stringArg(),
       body: stringArg(),
@@ -40,7 +43,7 @@ export const noteMutation = (t: any) => {
 
         if (!validation.success) throw new Error(INVALID_CREDENTIALS);
 
-        const userId = context.session.userId || 'temp-user-id';
+        // const userId = context.session.userId || 'temp-user-id';
         // if (!context.session.userId)
         //   throw new Error('User Id is required to create a note');
 
@@ -50,18 +53,34 @@ export const noteMutation = (t: any) => {
             body,
             isDeleted: isDeleted ?? false,
             deletedAt: deletedAt ? new Date(deletedAt) : null,
-            userId,
+            userId: FIXED_USER_ID,
           },
-          select: { id: true },
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            isDeleted: true,
+            deletedAt: true,
+            updatedAt: true,
+            user: {
+              select: {
+                email: true,
+                username: true,
+              }
+            }
+          },
         });
-        return !!note;
+
+        console.log('backend note', note);
+        return note;
       } catch (error) {
         console.error(error);
-        return false;
+        throw error;
       }
     },
   });
-  t.boolean('updateNote', {
+  t.field('updateNote', {
+    type: 'NoteType',
     args: {
       id: stringArg(),
       title: stringArg(),
@@ -116,14 +135,15 @@ export const noteMutation = (t: any) => {
           },
         });
 
-        return !!updatedNote;
-      } catch (error) { 
+        return updatedNote;
+      } catch (error) {
         console.error(error);
-        return false;
+        throw error;
       }
     },
   });
-  t.boolean('deleteNote', {
+  t.field('deleteNote', {
+    type: 'NoteType',
     args: {
       id: stringArg(),
     },
@@ -140,10 +160,10 @@ export const noteMutation = (t: any) => {
           },
         });
         if (!note) throw new Error(NOT_FOUND);
-        return true;
+        return note;
       } catch (error) {
         console.error('error loggin out', error);
-        return false;
+        throw error;
       }
     },
   });

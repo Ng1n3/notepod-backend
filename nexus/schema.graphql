@@ -8,17 +8,17 @@ A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `dat
 scalar DateTime
 
 type Mutation {
-  createNote(body: String, deletedAt: String, isDeleted: Boolean, title: String): Boolean
+  createNote(body: String, deletedAt: String, isDeleted: Boolean, title: String): NoteType
   createPassword(email: String, fieldname: String, password: String): Boolean
   createTodo(body: String, title: String): Boolean
   createUser(email: String, password: String, username: String): Boolean
-  deleteNote(id: String): Boolean
+  deleteNote(id: String): NoteType
   deleteTodo(id: String): Boolean
   deleteUser(id: String): Boolean
   deletedPassword(id: String): Boolean
   loginUser(password: String, username: String): Boolean
   logoutUser: Boolean
-  updateNote(body: String, deletedAt: String, id: String, isDeleted: Boolean, title: String): Boolean
+  updateNote(body: String, deletedAt: String, id: String, isDeleted: Boolean, title: String): NoteType
   updatePassword(deletedAt: String, email: String, fieldname: String, id: String, isDeleted: String, password: String): Boolean
   updateTodo(body: String, deletedAt: String, id: String, isDeleted: String, priority: String, title: String): Boolean
   updateUser(id: String, password: String): Boolean

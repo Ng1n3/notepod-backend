@@ -70,7 +70,7 @@ export const Query = queryType({
               user: true,
             },
           });
-              console.log("RAW notes from database", notes);
+              // console.log("RAW notes from database", notes);
 
 
           return notes.map((note) => ({

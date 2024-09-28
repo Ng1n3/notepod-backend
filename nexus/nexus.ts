@@ -104,17 +104,17 @@ export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
 
 export interface NexusGenFieldTypes {
   Mutation: { // field return type
-    createNote: boolean | null; // Boolean
+    createNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     createPassword: boolean | null; // Boolean
     createTodo: boolean | null; // Boolean
     createUser: boolean | null; // Boolean
-    deleteNote: boolean | null; // Boolean
+    deleteNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     deleteTodo: boolean | null; // Boolean
     deleteUser: boolean | null; // Boolean
     deletedPassword: boolean | null; // Boolean
     loginUser: boolean | null; // Boolean
     logoutUser: boolean | null; // Boolean
-    updateNote: boolean | null; // Boolean
+    updateNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     updatePassword: boolean | null; // Boolean
     updateTodo: boolean | null; // Boolean
     updateUser: boolean | null; // Boolean
@@ -175,17 +175,17 @@ export interface NexusGenFieldTypes {
 
 export interface NexusGenFieldTypeNames {
   Mutation: { // field return type name
-    createNote: 'Boolean'
+    createNote: 'NoteType'
     createPassword: 'Boolean'
     createTodo: 'Boolean'
     createUser: 'Boolean'
-    deleteNote: 'Boolean'
+    deleteNote: 'NoteType'
     deleteTodo: 'Boolean'
     deleteUser: 'Boolean'
     deletedPassword: 'Boolean'
     loginUser: 'Boolean'
     logoutUser: 'Boolean'
-    updateNote: 'Boolean'
+    updateNote: 'NoteType'
     updatePassword: 'Boolean'
     updateTodo: 'Boolean'
     updateUser: 'Boolean'
