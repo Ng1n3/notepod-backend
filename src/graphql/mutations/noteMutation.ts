@@ -39,7 +39,12 @@ export const noteMutation = (t: any) => {
           isDeleted: true,
           deletedAt: true,
           userId: true,
-        }).safeParse({ title, body, isDeleted, deletedAt });
+        }).safeParse({
+          title,
+          body,
+          isDeleted,
+          deletedAt: deletedAt ? new Date(deletedAt).toISOString() : null,
+        });
 
         if (!validation.success) throw new Error(INVALID_CREDENTIALS);
 
@@ -66,12 +71,12 @@ export const noteMutation = (t: any) => {
               select: {
                 email: true,
                 username: true,
-              }
-            }
+              },
+            },
           },
         });
 
-        console.log('backend note', note);
+        // console.log('backend note', note);
         return note;
       } catch (error) {
         console.error(error);

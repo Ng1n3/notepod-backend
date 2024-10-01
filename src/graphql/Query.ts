@@ -1,4 +1,4 @@
-import { intArg, list, queryType } from 'nexus';
+import { booleanArg, intArg, list, nonNull, queryType, stringArg } from 'nexus';
 
 import {
   // NOT_AUTHENTICATED,
@@ -53,13 +53,21 @@ export const Query = queryType({
       type: NoteType,
       args: {
         cursor: intArg(),
+        isDeleted: booleanArg(),
       },
-      resolve: async (_: unknown, { cursor }: Icursor, context: Mycontext) => {
+      resolve: async (
+        _: unknown,
+        { cursor, isDeleted }: Icursor,
+        context: Mycontext
+      ) => {
         try {
           // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
           const notes = await context.prisma.note.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
+            where: {
+              isDeleted: isDeleted !== undefined ? isDeleted : undefined,
+            },
             select: {
               id: true,
               title: true,
@@ -70,8 +78,7 @@ export const Query = queryType({
               user: true,
             },
           });
-              // console.log("RAW notes from database", notes);
-
+          // console.log("RAW notes from database", notes);
 
           return notes.map((note) => ({
             id: note.id,
@@ -95,18 +102,27 @@ export const Query = queryType({
       type: TodoType,
       args: {
         cursor: intArg(),
+        isDeleted: booleanArg(),
       },
-      resolve: async (_: unknown, { cursor }: Icursor, context: Mycontext) => {
+      resolve: async (
+        _: unknown,
+        { cursor, isDeleted }: Icursor,
+        context: Mycontext
+      ) => {
         try {
           // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
           const todos = await context.prisma.todos.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
+            where: {
+              isDeleted: isDeleted !== undefined ? isDeleted : undefined,
+            },
             select: {
               id: true,
               title: true,
               body: true,
               priority: true,
+              dueDate: true,
               isDeleted: true,
               deletedAt: true,
               user: true,
@@ -119,6 +135,7 @@ export const Query = queryType({
             body: todo.body,
             isDeleted: todo.isDeleted,
             deletedAt: todo.deletedAt,
+            dueDate: todo.dueDate,
             priority: todo.priority,
             user: todo.user,
           }));
@@ -132,13 +149,21 @@ export const Query = queryType({
       type: PasswordType,
       args: {
         cursor: intArg(),
+        isDeleted: booleanArg(),
       },
-      resolve: async (_: unknown, { cursor }: Icursor, context: Mycontext) => {
+      resolve: async (
+        _: unknown,
+        { cursor, isDeleted }: Icursor,
+        context: Mycontext
+      ) => {
         try {
           // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
           const passwordFields = await context.prisma.password.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
+            where: {
+              isDeleted: isDeleted !== undefined ? isDeleted : undefined,
+            },
             select: {
               id: true,
               fieldname: true,
@@ -162,6 +187,51 @@ export const Query = queryType({
         } catch (error) {
           console.error(error);
           return false;
+        }
+      },
+    });
+    t.field('getNote', {
+      type: 'NoteType',
+      args: {
+        id: nonNull(stringArg()),
+      },
+      resolve: async (
+        _: unknown,
+        { id }: { id: string },
+        context: Mycontext
+      ) => {
+        try {
+          const note = await context.prisma.note.findUnique({
+            where: { id },
+            select: {
+              id: true,
+              title: true,
+              body: true,
+              isDeleted: true,
+              updatedAt: true,
+              deletedAt: true,
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  username: true,
+                },
+              },
+            },
+          });
+          if (!note) {
+            throw new Error(`Note with ID ${id} not found`);
+          }
+          return {
+            ...note,
+            updatedAt:
+              note.updatedAt instanceof Date
+                ? note.updatedAt.toISOString()
+                : note.updatedAt,
+          };
+        } catch (error) {
+          console.error('Error fetching note: ', error);
+          throw error;
         }
       },
     });

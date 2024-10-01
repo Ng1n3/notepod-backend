@@ -43,6 +43,7 @@ export const ZodTodo = z.object({
   body: z.string().optional(),
   priority: z.enum(['LOW', 'MEDUM', 'HIGH', 'CRITICAL']).default('LOW'),
   isDeleted: z.boolean().default(false),
+  dueDate: z.date().default(() =>new Date()),
   userId: z.string().uuid(),
   deletedAt: z.date().nullable().optional(),
 });

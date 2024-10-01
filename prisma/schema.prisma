@@ -52,6 +52,7 @@ model Todos {
   user      User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   userId    String
   deletedAt DateTime?
+  dueDate   DateTime @default(now()) @db.Timestamptz(6)
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @db.Timestamptz(6)
 
@@ -75,6 +76,7 @@ model Password {
   isDeleted Boolean   @default(false)
   user      User      @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   userId    String
+  username  String?  @db.VarChar(256)
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @db.Timestamptz(6)
 

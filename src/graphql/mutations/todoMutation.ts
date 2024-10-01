@@ -62,10 +62,11 @@ export const todoMutation = (t: any) => {
         body,
         isDeleted,
         deletedAt,
+        dueDate,
         priority,
       }: Pick<
         Todos,
-        'body' | 'deletedAt' | 'id' | 'title' | 'isDeleted' | 'priority'
+        'body' | 'deletedAt' | 'id' | 'title' | 'isDeleted' | 'priority' | 'dueDate'
       >,
       context: Mycontext
     ) => {
@@ -77,6 +78,7 @@ export const todoMutation = (t: any) => {
           body: true,
           isDeleted: true,
           deletedAt: true,
+          duedate: true,
           priority: true,
         }).safeParse({ title, body, isDeleted, deletedAt, priority });
 
@@ -98,6 +100,7 @@ export const todoMutation = (t: any) => {
           data: {
             title: title ?? todo.title,
             body: body ?? todo.body,
+            dueDate: dueDate ?? todo.dueDate,
             deletedAt: deletedAt ?? todo.deletedAt,
             isDeleted: isDeleted ?? todo.isDeleted,
             priority: priority ?? todo.priority,

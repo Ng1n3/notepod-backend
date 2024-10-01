@@ -23,4 +23,5 @@ export interface Mycontext {
 
 export interface Icursor {
   cursor?: number;
+  isDeleted?:boolean;
 }

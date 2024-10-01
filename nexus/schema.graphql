@@ -48,22 +48,24 @@ type PasswordType {
 }
 
 type Query {
-  getNotes(cursor: Int): [NoteType]
-  getPasswordField(cursor: Int): [PasswordType]
-  getTodos(cursor: Int): [TodoType]
+  getNote(id: String!): NoteType
+  getNotes(cursor: Int, isDeleted: Boolean): [NoteType]
+  getPasswordField(cursor: Int, isDeleted: Boolean): [PasswordType]
+  getTodos(cursor: Int, isDeleted: Boolean): [TodoType]
   getUsers(cursor: Int): [UserType]
   hello: String
 }
 
 type TodoType {
   body: String
-  createdAt: Float
-  deletedAt: Float
+  createdAt: DateTime
+  deletedAt: DateTime
+  dueDate: DateTime
   id: String
   isDeleted: Boolean
   priority: String
   title: String
-  updatedAt: Float
+  updatedAt: DateTime
   user: UserType
 }
 
