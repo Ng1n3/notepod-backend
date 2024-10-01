@@ -9,7 +9,7 @@ scalar DateTime
 
 type Mutation {
   createNote(body: String, deletedAt: String, isDeleted: Boolean, title: String): NoteType
-  createPassword(email: String, fieldname: String, password: String): Boolean
+  createPassword(email: String, fieldname: String, password: String, username: String): Boolean
   createTodo(body: String, title: String): Boolean
   createUser(email: String, password: String, username: String): Boolean
   deleteNote(id: String): NoteType
@@ -19,7 +19,7 @@ type Mutation {
   loginUser(password: String, username: String): Boolean
   logoutUser: Boolean
   updateNote(body: String, deletedAt: String, id: String, isDeleted: Boolean, title: String): NoteType
-  updatePassword(deletedAt: String, email: String, fieldname: String, id: String, isDeleted: String, password: String): Boolean
+  updatePassword(deletedAt: String, email: String, fieldname: String, id: String, isDeleted: String, password: String, username: String): Boolean
   updateTodo(body: String, deletedAt: String, id: String, isDeleted: String, priority: String, title: String): Boolean
   updateUser(id: String, password: String): Boolean
 }
@@ -36,15 +36,16 @@ type NoteType {
 }
 
 type PasswordType {
-  createdAt: Float
-  deletedAt: Float
+  createdAt: DateTime
+  deletedAt: DateTime
   email: String
   fieldname: String
   id: String
   isDeleted: Boolean
   password: String
-  updatedAt: Float
+  updatedAt: DateTime
   user: UserType
+  username: String
 }
 
 type Query {

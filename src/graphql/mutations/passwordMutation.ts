@@ -15,6 +15,7 @@ export const passwordMutation = (t: any) => {
       fieldname: stringArg(),
       email: stringArg(),
       password: stringArg(),
+      username: stringArg(),
     },
     resolve: async (
       _: unknown,
@@ -22,7 +23,8 @@ export const passwordMutation = (t: any) => {
         fieldname,
         email,
         password,
-      }: Pick<Password, 'fieldname' | 'email' | 'password'>,
+        username
+      }: Pick<Password, 'fieldname' | 'email' | 'password'| 'username'>,
       context: Mycontext
     ) => {
       try {
@@ -30,8 +32,9 @@ export const passwordMutation = (t: any) => {
         const validation = ZodPassword.pick({
           fieldname: true,
           email: true,
+          username: true,
           password: true,
-        }).safeParse({ fieldname, email, password });
+        }).safeParse({ fieldname, email, password, username });
 
         if (!validation.success) {
           validation.error.issues.map((issue) => {
@@ -50,6 +53,7 @@ export const passwordMutation = (t: any) => {
             email,
             fieldname,
             password,
+            username,
             userId: context.session.userId,
           },
           select: { id: true },
@@ -66,6 +70,7 @@ export const passwordMutation = (t: any) => {
       id: stringArg(),
       fieldname: stringArg(),
       email: stringArg(),
+      username: stringArg(),
       password: stringArg(),
       isDeleted: stringArg(),
       deletedAt: stringArg(),
@@ -77,11 +82,12 @@ export const passwordMutation = (t: any) => {
         fieldname,
         email,
         password,
+        username,
         isDeleted,
         deletedAt,
       }: Pick<
         Password,
-        'fieldname' | 'email' | 'password' | 'isDeleted' | 'deletedAt' | 'id'
+        'fieldname' | 'email' | 'password' | 'isDeleted' | 'deletedAt' | 'id' | 'username'
       >,
       context: Mycontext
     ) => {
@@ -91,9 +97,10 @@ export const passwordMutation = (t: any) => {
           fieldname: true,
           email: true,
           password: true,
+          username: true,
           isDeleted: true,
           deletedAt: true,
-        }).safeParse({ fieldname, email, password, isDeleted, deletedAt });
+        }).safeParse({ fieldname, username, email, password, isDeleted, deletedAt });
 
         if (!validation.success) {
           validation.error.issues.map((issue) => {
@@ -116,6 +123,7 @@ export const passwordMutation = (t: any) => {
           data: {
             fieldname: fieldname ?? passwordField.fieldname,
             email: email ?? passwordField.email,
+            username: username ?? passwordField.username,
             password: password ?? passwordField.password,
             isDeleted: isDeleted ?? passwordField.isDeleted,
             deletedAt: deletedAt ?? passwordField.deletedAt,

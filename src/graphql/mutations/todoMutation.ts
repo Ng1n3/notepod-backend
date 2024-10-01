@@ -78,7 +78,7 @@ export const todoMutation = (t: any) => {
           body: true,
           isDeleted: true,
           deletedAt: true,
-          duedate: true,
+          dueDate: true,
           priority: true,
         }).safeParse({ title, body, isDeleted, deletedAt, priority });
 

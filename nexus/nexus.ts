@@ -55,15 +55,16 @@ export interface NexusGenObjects {
     user?: NexusGenRootTypes['UserType'] | null; // UserType
   }
   PasswordType: { // root type
-    createdAt?: number | null; // Float
-    deletedAt?: number | null; // Float
+    createdAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    deletedAt?: NexusGenScalars['DateTime'] | null; // DateTime
     email?: string | null; // String
     fieldname?: string | null; // String
     id?: string | null; // String
     isDeleted?: boolean | null; // Boolean
     password?: string | null; // String
-    updatedAt?: number | null; // Float
+    updatedAt?: NexusGenScalars['DateTime'] | null; // DateTime
     user?: NexusGenRootTypes['UserType'] | null; // UserType
+    username?: string | null; // String
   }
   Query: {};
   TodoType: { // root type
@@ -131,15 +132,16 @@ export interface NexusGenFieldTypes {
     user: NexusGenRootTypes['UserType'] | null; // UserType
   }
   PasswordType: { // field return type
-    createdAt: number | null; // Float
-    deletedAt: number | null; // Float
+    createdAt: NexusGenScalars['DateTime'] | null; // DateTime
+    deletedAt: NexusGenScalars['DateTime'] | null; // DateTime
     email: string | null; // String
     fieldname: string | null; // String
     id: string | null; // String
     isDeleted: boolean | null; // Boolean
     password: string | null; // String
-    updatedAt: number | null; // Float
+    updatedAt: NexusGenScalars['DateTime'] | null; // DateTime
     user: NexusGenRootTypes['UserType'] | null; // UserType
+    username: string | null; // String
   }
   Query: { // field return type
     getNote: NexusGenRootTypes['NoteType'] | null; // NoteType
@@ -204,15 +206,16 @@ export interface NexusGenFieldTypeNames {
     user: 'UserType'
   }
   PasswordType: { // field return type name
-    createdAt: 'Float'
-    deletedAt: 'Float'
+    createdAt: 'DateTime'
+    deletedAt: 'DateTime'
     email: 'String'
     fieldname: 'String'
     id: 'String'
     isDeleted: 'Boolean'
     password: 'String'
-    updatedAt: 'Float'
+    updatedAt: 'DateTime'
     user: 'UserType'
+    username: 'String'
   }
   Query: { // field return type name
     getNote: 'NoteType'
@@ -261,6 +264,7 @@ export interface NexusGenArgTypes {
       email?: string | null; // String
       fieldname?: string | null; // String
       password?: string | null; // String
+      username?: string | null; // String
     }
     createTodo: { // args
       body?: string | null; // String
@@ -301,6 +305,7 @@ export interface NexusGenArgTypes {
       id?: string | null; // String
       isDeleted?: string | null; // String
       password?: string | null; // String
+      username?: string | null; // String
     }
     updateTodo: { // args
       body?: string | null; // String

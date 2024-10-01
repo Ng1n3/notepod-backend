@@ -55,6 +55,7 @@ export const ZodPassword = z.object({
     .optional()
     .nullable(),
   email: z.string().optional(),
+  username: z.string().optional(),
   priority: z.enum(['LOW', 'MEDUM', 'HIGH', 'CRITICAL']).default('LOW'),
   password: z.string().nullable().optional(),
   isDeleted: z.boolean().default(false),
