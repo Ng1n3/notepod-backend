@@ -108,7 +108,7 @@ export interface NexusGenFieldTypes {
   Mutation: { // field return type
     createNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     createPassword: boolean | null; // Boolean
-    createTodo: boolean | null; // Boolean
+    createTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
     createUser: boolean | null; // Boolean
     deleteNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     deleteTodo: boolean | null; // Boolean
@@ -182,7 +182,7 @@ export interface NexusGenFieldTypeNames {
   Mutation: { // field return type name
     createNote: 'NoteType'
     createPassword: 'Boolean'
-    createTodo: 'Boolean'
+    createTodo: 'TodoType'
     createUser: 'Boolean'
     deleteNote: 'NoteType'
     deleteTodo: 'Boolean'
@@ -268,6 +268,10 @@ export interface NexusGenArgTypes {
     }
     createTodo: { // args
       body?: string | null; // String
+      deletedAt?: string | null; // String
+      dueDate?: string | null; // String
+      isDeleted?: boolean | null; // Boolean
+      priority?: string | null; // String
       title?: string | null; // String
     }
     createUser: { // args

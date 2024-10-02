@@ -1,5 +1,5 @@
 import { Todos } from '@prisma/client';
-import { stringArg } from 'nexus';
+import { booleanArg, stringArg } from 'nexus';
 import {
   INVALID_CREDENTIALS,
   NOT_AUTHENTICATED,
@@ -7,41 +7,94 @@ import {
 } from '../../constants';
 import { Mycontext } from '../../interfaces';
 import { isAuthenticated } from '../../util';
-import { ZodNote, ZodTodo } from '../validator/schema';
+import { ZodTodo } from '../validator/schema';
+
+const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
 
 export const todoMutation = (t: any) => {
-  t.boolean('createTodo', {
+  t.field('createTodo', {
+    type: 'TodoType',
     args: {
       title: stringArg(),
       body: stringArg(),
+      priority: stringArg(),
+      dueDate: stringArg(),
+      isDeleted: booleanArg(),
+      deletedAt: stringArg(),
     },
     resolve: async (
       _: unknown,
-      { title, body }: Pick<Todos, 'body' | 'title'>,
+      {
+        title,
+        body,
+        isDeleted,
+        deletedAt,
+        priority,
+        dueDate,
+      }: Pick<
+        Todos,
+        'body' | 'title' | 'priority' | 'dueDate' | 'isDeleted' | 'deletedAt'
+      >,
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
 
-        const validation = ZodNote.pick({
+        const validation = ZodTodo.pick({
           title: true,
           body: true,
-        }).safeParse({ title, body });
-
-        if (!validation.success) throw new Error(INVALID_CREDENTIALS);
-
-        if (!context.session.userId)
-          throw new Error('User Id is required to create a note');
-
-        const todo = await context.prisma.todos.create({
-          data: { title, body, userId: context.session.userId },
-          select: { id: true },
+          userId: true,
+          deletedAt: true,
+          priority: true,
+          dueDate: true,
+          isDeleted: true,
+        }).safeParse({
+          title,
+          body,
+          userId: FIXED_USER_ID,
+          isDeleted: isDeleted ?? false,
+          dueDate: dueDate ? new Date(dueDate): undefined,
+          priority: priority ?? 'LOW',
+          deletedAt: deletedAt ? new Date(deletedAt) : null,
         });
 
-        return !!todo;
+        if (!validation.success){
+          console.log("validation error: ", validation.error.issues);
+          throw new Error(INVALID_CREDENTIALS)};
+
+        // if (!context.session.userId)
+        //   throw new Error('User Id is required to create a note');
+
+        const todo = await context.prisma.todos.create({
+          data: {
+            title,
+            body,
+            priority,
+            isDeleted: isDeleted,
+            dueDate: dueDate ? new Date(dueDate): undefined,
+            userId: FIXED_USER_ID,
+          },
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            priority: true,
+            isDeleted: true,
+            dueDate: true,
+            updatedAt: true,
+            user: {
+              select: {
+                email: true,
+                username: true,
+              },
+            },
+          },
+        });
+        console.log("backend todo", todo);
+        return todo;
       } catch (error) {
         console.error(error);
-        return false;
+        throw error;
       }
     },
   });
@@ -66,7 +119,13 @@ export const todoMutation = (t: any) => {
         priority,
       }: Pick<
         Todos,
-        'body' | 'deletedAt' | 'id' | 'title' | 'isDeleted' | 'priority' | 'dueDate'
+        | 'body'
+        | 'deletedAt'
+        | 'id'
+        | 'title'
+        | 'isDeleted'
+        | 'priority'
+        | 'dueDate'
       >,
       context: Mycontext
     ) => {

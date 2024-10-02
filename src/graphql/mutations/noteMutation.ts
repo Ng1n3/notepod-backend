@@ -10,7 +10,7 @@ import { Mycontext } from '../../interfaces';
 // import { isAuthenticated } from '../../util';
 import { ZodNote } from '../validator/schema';
 
-const FIXED_USER_ID = '5bece35b-8d4b-4d81-beb0-a13c406a0da3';
+const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
 export const noteMutation = (t: any) => {
   t.field('createNote', {
     type: 'NoteType',
@@ -76,7 +76,7 @@ export const noteMutation = (t: any) => {
           },
         });
 
-        // console.log('backend note', note);
+        console.log('backend note', note);
         return note;
       } catch (error) {
         console.error(error);

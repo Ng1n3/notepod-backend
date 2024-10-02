@@ -31,7 +31,7 @@ export const ZodNote = z.object({
   isDeleted: z.boolean().default(false).optional(),
   userId: z.string().uuid().optional(),
   deletedAt: z.date().nullable().optional(),
-  updatedAt: z.date().nullable().optional()
+  updatedAt: z.date().nullable().optional(),
 });
 
 export const ZodTodo = z.object({
@@ -41,7 +41,7 @@ export const ZodTodo = z.object({
     .nullable()
     .optional(),
   body: z.string().optional(),
-  priority: z.enum(['LOW', 'MEDUM', 'HIGH', 'CRITICAL']).default('LOW'),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('LOW'),
   isDeleted: z.boolean().default(false),
   dueDate: z.date().default(() =>new Date()),
   userId: z.string().uuid(),
