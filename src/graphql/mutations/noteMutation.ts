@@ -76,7 +76,7 @@ export const noteMutation = (t: any) => {
           },
         });
 
-        console.log('backend note', note);
+        // console.log('backend note', note);
         return note;
       } catch (error) {
         console.error(error);

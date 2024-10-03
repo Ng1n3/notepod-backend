@@ -9,8 +9,11 @@ import { Mycontext } from '../../interfaces';
 import { isAuthenticated } from '../../util';
 import { ZodPassword } from '../validator/schema';
 
+const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
+
 export const passwordMutation = (t: any) => {
-  t.boolean('createPassword', {
+  t.field('createPassword', {
+    type: 'PasswordType',
     args: {
       fieldname: stringArg(),
       email: stringArg(),
@@ -23,18 +26,39 @@ export const passwordMutation = (t: any) => {
         fieldname,
         email,
         password,
-        username
-      }: Pick<Password, 'fieldname' | 'email' | 'password'| 'username'>,
+        username,
+        isDeleted,
+        deletedAt,
+      }: Pick<
+        Password,
+        | 'fieldname'
+        | 'email'
+        | 'password'
+        | 'username'
+        | 'deletedAt'
+        | 'isDeleted'
+      >,
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         const validation = ZodPassword.pick({
           fieldname: true,
           email: true,
           username: true,
           password: true,
-        }).safeParse({ fieldname, email, password, username });
+          isDeleted: true,
+          deletedAt: true,
+          userId: true,
+        }).safeParse({
+          fieldname,
+          email,
+          password,
+          username,
+          isDeleted,
+          userId: FIXED_USER_ID,
+          deletedAt: deletedAt ? new Date(deletedAt).toISOString() : null,
+        });
 
         if (!validation.success) {
           validation.error.issues.map((issue) => {
@@ -43,10 +67,10 @@ export const passwordMutation = (t: any) => {
           throw new Error(INVALID_CREDENTIALS);
         }
 
-        if (!context.session.userId)
-          throw new Error(
-            'User Id is required to create a password field in notepod.xyz'
-          );
+        // if (!context.session.userId)
+        //   throw new Error(
+        //     'User Id is required to create a password field in notepod.xyz'
+        //   );
 
         const passwordField = await context.prisma.password.create({
           data: {
@@ -54,11 +78,29 @@ export const passwordMutation = (t: any) => {
             fieldname,
             password,
             username,
-            userId: context.session.userId,
+            isDeleted: isDeleted ?? false,
+            deletedAt: deletedAt ? new Date(deletedAt) : null,
+            // userId: context.session.userId,
+            userId: FIXED_USER_ID,
           },
-          select: { id: true },
+          select: {
+            id: true,
+            fieldname: true,
+            password: true,
+            email: true,
+            username: true,
+            isDeleted: true,
+            deletedAt: true,
+            user: {
+              select: {
+                username: true,
+                email: true,
+              },
+            },
+          },
         });
-        return !!passwordField;
+        console.log('backend passwordField: ', passwordField);
+        return passwordField;
       } catch (error) {
         console.error(error);
         return false;
@@ -87,7 +129,13 @@ export const passwordMutation = (t: any) => {
         deletedAt,
       }: Pick<
         Password,
-        'fieldname' | 'email' | 'password' | 'isDeleted' | 'deletedAt' | 'id' | 'username'
+        | 'fieldname'
+        | 'email'
+        | 'password'
+        | 'isDeleted'
+        | 'deletedAt'
+        | 'id'
+        | 'username'
       >,
       context: Mycontext
     ) => {
@@ -100,7 +148,14 @@ export const passwordMutation = (t: any) => {
           username: true,
           isDeleted: true,
           deletedAt: true,
-        }).safeParse({ fieldname, username, email, password, isDeleted, deletedAt });
+        }).safeParse({
+          fieldname,
+          username,
+          email,
+          password,
+          isDeleted,
+          deletedAt,
+        });
 
         if (!validation.success) {
           validation.error.issues.map((issue) => {
@@ -138,19 +193,23 @@ export const passwordMutation = (t: any) => {
   });
   t.boolean('deletedPassword', {
     args: {
-      id: stringArg()
+      id: stringArg(),
     },
-    resolve: async(_:unknown, {id}: Pick<Password, 'id'>, context: Mycontext) => {
+    resolve: async (
+      _: unknown,
+      { id }: Pick<Password, 'id'>,
+      context: Mycontext
+    ) => {
       try {
         if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         await context.prisma.password.delete({
-          where: {id}
-        })
+          where: { id },
+        });
         return true;
       } catch (error) {
-        console.error(error)
+        console.error(error);
         return false;
       }
-    }
-  })
+    },
+  });
 };

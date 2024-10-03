@@ -9,7 +9,7 @@ scalar DateTime
 
 type Mutation {
   createNote(body: String, deletedAt: String, isDeleted: Boolean, title: String): NoteType
-  createPassword(email: String, fieldname: String, password: String, username: String): Boolean
+  createPassword(email: String, fieldname: String, password: String, username: String): PasswordType
   createTodo(body: String, deletedAt: String, dueDate: String, isDeleted: Boolean, priority: String, title: String): TodoType
   createUser(email: String, password: String, username: String): Boolean
   deleteNote(id: String): NoteType
