@@ -118,7 +118,7 @@ export interface NexusGenFieldTypes {
     logoutUser: boolean | null; // Boolean
     updateNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     updatePassword: boolean | null; // Boolean
-    updateTodo: boolean | null; // Boolean
+    updateTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
     updateUser: boolean | null; // Boolean
   }
   NoteType: { // field return type
@@ -147,6 +147,7 @@ export interface NexusGenFieldTypes {
     getNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     getNotes: Array<NexusGenRootTypes['NoteType'] | null> | null; // [NoteType]
     getPasswordField: Array<NexusGenRootTypes['PasswordType'] | null> | null; // [PasswordType]
+    getTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
     getTodos: Array<NexusGenRootTypes['TodoType'] | null> | null; // [TodoType]
     getUsers: Array<NexusGenRootTypes['UserType'] | null> | null; // [UserType]
     hello: string | null; // String
@@ -192,7 +193,7 @@ export interface NexusGenFieldTypeNames {
     logoutUser: 'Boolean'
     updateNote: 'NoteType'
     updatePassword: 'Boolean'
-    updateTodo: 'Boolean'
+    updateTodo: 'TodoType'
     updateUser: 'Boolean'
   }
   NoteType: { // field return type name
@@ -221,6 +222,7 @@ export interface NexusGenFieldTypeNames {
     getNote: 'NoteType'
     getNotes: 'NoteType'
     getPasswordField: 'PasswordType'
+    getTodo: 'TodoType'
     getTodos: 'TodoType'
     getUsers: 'UserType'
     hello: 'String'
@@ -314,8 +316,9 @@ export interface NexusGenArgTypes {
     updateTodo: { // args
       body?: string | null; // String
       deletedAt?: string | null; // String
+      dueDate?: string | null; // String
       id?: string | null; // String
-      isDeleted?: string | null; // String
+      isDeleted?: boolean | null; // Boolean
       priority?: string | null; // String
       title?: string | null; // String
     }
@@ -335,6 +338,9 @@ export interface NexusGenArgTypes {
     getPasswordField: { // args
       cursor?: number | null; // Int
       isDeleted?: boolean | null; // Boolean
+    }
+    getTodo: { // args
+      id: string; // String!
     }
     getTodos: { // args
       cursor?: number | null; // Int

@@ -98,12 +98,14 @@ export const todoMutation = (t: any) => {
       }
     },
   });
-  t.boolean('updateTodo', {
+  t.field('updateTodo', {
+    type: 'TodoType',
     args: {
       id: stringArg(),
       title: stringArg(),
       body: stringArg(),
-      isDeleted: stringArg(),
+      dueDate: stringArg(),
+      isDeleted: booleanArg(),
       deletedAt: stringArg(),
       priority: stringArg(),
     },
@@ -130,7 +132,7 @@ export const todoMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
 
         const validation = ZodTodo.pick({
           title: true,
@@ -139,6 +141,7 @@ export const todoMutation = (t: any) => {
           deletedAt: true,
           dueDate: true,
           priority: true,
+          // userId: true,
         }).safeParse({ title, body, isDeleted, deletedAt, priority });
 
         if (!validation.success) {
@@ -148,8 +151,8 @@ export const todoMutation = (t: any) => {
           throw new Error(INVALID_CREDENTIALS);
         }
 
-        if (!context.session.userId)
-          throw new Error('User Id is required to create a note');
+        // if (!context.session.userId)
+        //   throw new Error('User Id is required to create a note');
 
         const todo = await context.prisma.todos.findUnique({ where: { id } });
         if (!todo) return new Error(NOT_FOUND);
@@ -164,11 +167,26 @@ export const todoMutation = (t: any) => {
             isDeleted: isDeleted ?? todo.isDeleted,
             priority: priority ?? todo.priority,
           },
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            isDeleted: true,
+            deletedAt: true,
+            dueDate: true,
+            priority: true,
+            user: {
+              select: {
+                email: true,
+                username: true,
+              }
+            }
+          }
         });
-        return !!updatedTodo;
+        return updatedTodo;
       } catch (error) {
         console.error(error);
-        return false;
+        throw error;
       }
     },
   });

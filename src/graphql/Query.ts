@@ -125,7 +125,13 @@ export const Query = queryType({
               dueDate: true,
               isDeleted: true,
               deletedAt: true,
-              user: true,
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  username: true,
+                }
+              },
             },
           });
 
@@ -233,6 +239,46 @@ export const Query = queryType({
           };
         } catch (error) {
           console.error('Error fetching note: ', error);
+          throw error;
+        }
+      },
+    });
+    t.field('getTodo', {
+      type: 'TodoType',
+      args: {
+        id: nonNull(stringArg()),
+      },
+      resolve: async (
+        _: unknown,
+        { id }: { id: string },
+        context: Mycontext
+      ) => {
+        try {
+          const todo = await context.prisma.todos.findUnique({
+            where: { id },
+            select: {
+              id: true,
+              title: true,
+              body: true,
+              priority: true,
+              isDeleted: true,
+              dueDate: true,
+              deletedAt: true,
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  username: true,
+                },
+              },
+            },
+          });
+          if (!todo) {
+            throw new Error(`Todo with ID ${id} not found`);
+          }
+          return todo;        
+        } catch (error) {
+          console.error('Error fetching todo: ', error);
           throw error;
         }
       },
