@@ -147,6 +147,7 @@ export interface NexusGenFieldTypes {
     getNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     getNotes: Array<NexusGenRootTypes['NoteType'] | null> | null; // [NoteType]
     getPasswordField: NexusGenRootTypes['PasswordType'] | null; // PasswordType
+    getPasswordFields: Array<NexusGenRootTypes['PasswordType'] | null> | null; // [PasswordType]
     getTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
     getTodos: Array<NexusGenRootTypes['TodoType'] | null> | null; // [TodoType]
     getUsers: Array<NexusGenRootTypes['UserType'] | null> | null; // [UserType]
@@ -222,6 +223,7 @@ export interface NexusGenFieldTypeNames {
     getNote: 'NoteType'
     getNotes: 'NoteType'
     getPasswordField: 'PasswordType'
+    getPasswordFields: 'PasswordType'
     getTodo: 'TodoType'
     getTodos: 'TodoType'
     getUsers: 'UserType'
@@ -337,6 +339,10 @@ export interface NexusGenArgTypes {
     }
     getPasswordField: { // args
       id: string; // String!
+    }
+    getPasswordFields: { // args
+      cursor?: number | null; // Int
+      isDeleted?: boolean | null; // Boolean
     }
     getTodo: { // args
       id: string; // String!

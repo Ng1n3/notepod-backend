@@ -151,7 +151,7 @@ export const Query = queryType({
         }
       },
     });
-    t.list.field('getPasswordField', {
+    t.list.field('getPasswordFields', {
       type: PasswordType,
       args: {
         cursor: intArg(),
