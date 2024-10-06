@@ -130,7 +130,7 @@ export const Query = queryType({
                   id: true,
                   email: true,
                   username: true,
-                }
+                },
               },
             },
           });
@@ -276,9 +276,48 @@ export const Query = queryType({
           if (!todo) {
             throw new Error(`Todo with ID ${id} not found`);
           }
-          return todo;        
+          return todo;
         } catch (error) {
           console.error('Error fetching todo: ', error);
+          throw error;
+        }
+      },
+    });
+    t.field('getPasswordField', {
+      type: 'PasswordType',
+      args: {
+        id: nonNull(stringArg()),
+      },
+      resolve: async (
+        _: unknown,
+        { id }: { id: string },
+        context: Mycontext
+      ) => {
+        try {
+          const password = await context.prisma.password.findUnique({
+            where: { id },
+            select: {
+              id: true,
+              username: true,
+              fieldname: true,
+              password: true,
+              isDeleted: true,
+              deletedAt: true,
+              email: true,
+              user: {
+                select: {
+                  email: true,
+                  username: true,
+                },
+              },
+            },
+          });
+          if (!password) {
+            throw new Error(`Password with ID ${id} not found`);
+          }
+          return password;
+        } catch (error) {
+          console.error('Error fetching Passwordfields: ', error);
           throw error;
         }
       },
