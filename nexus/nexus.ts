@@ -117,7 +117,7 @@ export interface NexusGenFieldTypes {
     loginUser: boolean | null; // Boolean
     logoutUser: boolean | null; // Boolean
     updateNote: NexusGenRootTypes['NoteType'] | null; // NoteType
-    updatePassword: boolean | null; // Boolean
+    updatePassword: NexusGenRootTypes['PasswordType'] | null; // PasswordType
     updateTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
     updateUser: boolean | null; // Boolean
   }
@@ -192,7 +192,7 @@ export interface NexusGenFieldTypeNames {
     loginUser: 'Boolean'
     logoutUser: 'Boolean'
     updateNote: 'NoteType'
-    updatePassword: 'Boolean'
+    updatePassword: 'PasswordType'
     updateTodo: 'TodoType'
     updateUser: 'Boolean'
   }
@@ -309,7 +309,7 @@ export interface NexusGenArgTypes {
       email?: string | null; // String
       fieldname?: string | null; // String
       id?: string | null; // String
-      isDeleted?: string | null; // String
+      isDeleted?: boolean | null; // Boolean
       password?: string | null; // String
       username?: string | null; // String
     }

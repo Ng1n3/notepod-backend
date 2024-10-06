@@ -1,5 +1,5 @@
 import { Password } from '@prisma/client';
-import { stringArg } from 'nexus';
+import { booleanArg, stringArg } from 'nexus';
 import {
   INVALID_CREDENTIALS,
   NOT_AUTHENTICATED,
@@ -107,14 +107,15 @@ export const passwordMutation = (t: any) => {
       }
     },
   });
-  t.boolean('updatePassword', {
+  t.field('updatePassword', {
+    type: 'PasswordType',
     args: {
       id: stringArg(),
       fieldname: stringArg(),
       email: stringArg(),
       username: stringArg(),
       password: stringArg(),
-      isDeleted: stringArg(),
+      isDeleted: booleanArg(),
       deletedAt: stringArg(),
     },
     resolve: async (
@@ -140,7 +141,7 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         const validation = ZodPassword.pick({
           fieldname: true,
           email: true,
@@ -164,8 +165,8 @@ export const passwordMutation = (t: any) => {
           throw new Error(INVALID_CREDENTIALS);
         }
 
-        if (!context.session.userId)
-          throw new Error('User Id is required to create a password field');
+        // if (!context.session.userId)
+        //   throw new Error('User Id is required to create a password field');
 
         const passwordField = await context.prisma.password.findUnique({
           where: { id },
@@ -183,11 +184,26 @@ export const passwordMutation = (t: any) => {
             isDeleted: isDeleted ?? passwordField.isDeleted,
             deletedAt: deletedAt ?? passwordField.deletedAt,
           },
+          select: {
+            id: true,
+            email: true,
+            fieldname: true,
+            password: true,
+            username: true,
+            isDeleted: true,
+            deletedAt: true,
+            user: {
+              select: {
+                email: true,
+                username: true,
+              }
+            }
+          }
         });
-        return !!updatedPasswordField;
+        return updatedPasswordField;
       } catch (error) {
         console.error(error);
-        return false;
+        throw error;
       }
     },
   });
