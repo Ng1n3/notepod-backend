@@ -53,14 +53,15 @@ export const todoMutation = (t: any) => {
           body,
           userId: FIXED_USER_ID,
           isDeleted: isDeleted ?? false,
-          dueDate: dueDate ? new Date(dueDate): undefined,
+          dueDate: dueDate ? new Date(dueDate) : undefined,
           priority: priority ?? 'LOW',
           deletedAt: deletedAt ? new Date(deletedAt) : null,
         });
 
-        if (!validation.success){
-          console.log("validation error: ", validation.error.issues);
-          throw new Error(INVALID_CREDENTIALS)};
+        if (!validation.success) {
+          console.log('validation error: ', validation.error.issues);
+          throw new Error(INVALID_CREDENTIALS);
+        }
 
         // if (!context.session.userId)
         //   throw new Error('User Id is required to create a note');
@@ -71,7 +72,7 @@ export const todoMutation = (t: any) => {
             body,
             priority,
             isDeleted: isDeleted,
-            dueDate: dueDate ? new Date(dueDate): undefined,
+            dueDate: dueDate ? new Date(dueDate) : undefined,
             userId: FIXED_USER_ID,
           },
           select: {
@@ -90,7 +91,7 @@ export const todoMutation = (t: any) => {
             },
           },
         });
-        console.log("backend todo", todo);
+        console.log('backend todo', todo);
         return todo;
       } catch (error) {
         console.error(error);
@@ -179,9 +180,9 @@ export const todoMutation = (t: any) => {
               select: {
                 email: true,
                 username: true,
-              }
-            }
-          }
+              },
+            },
+          },
         });
         return updatedTodo;
       } catch (error) {
@@ -259,17 +260,67 @@ export const todoMutation = (t: any) => {
             body: true,
             priority: true,
             dueDate: true,
+            deletedAt: true,
             isDeleted: true,
             updatedAt: true,
             user: {
               select: {
                 email: true,
-                username: true
-              }
-            }
-          }
+                username: true,
+              },
+            },
+          },
         });
         return updatedTodo;
+      } catch (error) {
+        console.error('error restoring note', error);
+        throw error;
+      }
+    },
+  });
+  t.field('softDeleteTodo', {
+    type: 'TodoType',
+    args: {
+      id: stringArg(),
+    },
+    resolve: async (
+      _: unknown,
+      { id }: Pick<Todos, 'id'>,
+      context: Mycontext
+    ) => {
+      try {
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+
+        const selectedTodo = await context.prisma.todos.findUnique({
+          where: { id },
+        });
+        if (!selectedTodo) throw new Error(NOT_FOUND);
+        if (selectedTodo.isDeleted && selectedTodo.deletedAt)
+          return selectedTodo;
+        const updatedTodos = await context.prisma.todos.update({
+          where: { id },
+          data: {
+            isDeleted: true,
+            deletedAt: new Date(),
+          },
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            priority: true,
+            dueDate: true,
+            isDeleted: true,
+            deletedAt: true,
+            updatedAt: true,
+            user: {
+              select: {
+                email: true,
+                username: true,
+              },
+            },
+          },
+        });
+        return updatedTodos;
       } catch (error) {
         console.error('error restoring note', error);
         throw error;

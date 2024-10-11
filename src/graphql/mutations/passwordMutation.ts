@@ -293,5 +293,54 @@ export const passwordMutation = (t: any) => {
       }
     },
   });
+  t.field('softDeletePassword', {
+    type: 'PasswordType',
+    args: {
+      id: stringArg(),
+    },
+    resolve: async (
+      _: unknown,
+      { id }: Pick<Password, 'id'>,
+      context: Mycontext
+    ) => {
+      try {
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+
+        const selectedPassword = await context.prisma.password.findUnique({
+          where: { id },
+        });
+        if (!selectedPassword) throw new Error(NOT_FOUND);
+        if (selectedPassword.isDeleted && selectedPassword.deletedAt)
+          return selectedPassword;
+        const updatedPassword = await context.prisma.password.update({
+          where: { id },
+          data: {
+            isDeleted: true,
+            deletedAt: new Date(),
+          },
+          select: {
+            id: true,
+            fieldname: true,
+            email: true,
+            username: true,
+            password: true,
+            isDeleted: true,
+            deletedAt: true,
+            updatedAt: true,
+            user: {
+              select: {
+                email: true,
+                username: true,
+              },
+            },
+          },
+        });
+        return updatedPassword;
+      } catch (error) {
+        console.error('error restoring note', error);
+        throw error;
+      }
+    },
+  });
 };
 
