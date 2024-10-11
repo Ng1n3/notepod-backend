@@ -228,4 +228,69 @@ export const passwordMutation = (t: any) => {
       }
     },
   });
+  t.field('restorePassword', {
+    type: 'PasswordType',
+    args: {
+      id: stringArg(),
+      isDeleted: booleanArg(),
+      deletedAt: stringArg(),
+    },
+    resolve: async (
+      _: unknown,
+      {
+        id,
+        deletedAt,
+        isDeleted,
+      }: Pick<Password, 'id' | 'isDeleted' | 'deletedAt'>,
+      context: Mycontext
+    ) => {
+      try {
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        const validation = ZodPassword.pick({
+          isDeleted: true,
+          deletedAt: true,
+          userId: true,
+        }).safeParse({ isDeleted, deletedAt });
+
+        if (!validation.success) {
+          validation.error.issues.map((issue) => {
+            console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
+          });
+          throw new Error(INVALID_CREDENTIALS);
+        }
+
+        const selectedTodo = await context.prisma.todos.findUnique({
+          where: { id },
+        });
+        if (!selectedTodo) throw new Error(NOT_FOUND);
+        if (selectedTodo.isDeleted === false && selectedTodo.deletedAt) return;
+        const updatedTodo = await context.prisma.todos.update({
+          where: { id },
+          data: {
+            isDeleted: false,
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            priority: true,
+            dueDate: true,
+            isDeleted: true,
+            updatedAt: true,
+            user: {
+              select: {
+                email: true,
+                username: true
+              }
+            }
+          }
+        });
+        return updatedTodo;
+      } catch (error) {
+        console.error('error restoring note', error);
+        throw error;
+      }
+    },
+  });
 };

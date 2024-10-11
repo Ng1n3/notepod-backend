@@ -7,7 +7,7 @@ import {
 } from '../../constants';
 import { Mycontext } from '../../interfaces';
 import { isAuthenticated } from '../../util';
-import { ZodTodo } from '../validator/schema';
+import { ZodNote, ZodTodo } from '../validator/schema';
 
 const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
 
@@ -208,6 +208,71 @@ export const todoMutation = (t: any) => {
       } catch (error) {
         console.error(error);
         return false;
+      }
+    },
+  });
+  t.field('restoreTodo', {
+    type: 'TodoType',
+    args: {
+      id: stringArg(),
+      isDeleted: booleanArg(),
+      deletedAt: stringArg(),
+    },
+    resolve: async (
+      _: unknown,
+      {
+        id,
+        deletedAt,
+        isDeleted,
+      }: Pick<Todos, 'id' | 'isDeleted' | 'deletedAt'>,
+      context: Mycontext
+    ) => {
+      try {
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        const validation = ZodTodo.pick({
+          isDeleted: true,
+          deletedAt: true,
+          userId: true,
+        }).safeParse({ isDeleted, deletedAt });
+
+        if (!validation.success) {
+          validation.error.issues.map((issue) => {
+            console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
+          });
+          throw new Error(INVALID_CREDENTIALS);
+        }
+
+        const selectedTodo = await context.prisma.todos.findUnique({
+          where: { id },
+        });
+        if (!selectedTodo) throw new Error(NOT_FOUND);
+        if (selectedTodo.isDeleted === false && selectedTodo.deletedAt) return;
+        const updatedTodo = await context.prisma.todos.update({
+          where: { id },
+          data: {
+            isDeleted: false,
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            priority: true,
+            dueDate: true,
+            isDeleted: true,
+            updatedAt: true,
+            user: {
+              select: {
+                email: true,
+                username: true
+              }
+            }
+          }
+        });
+        return updatedTodo;
+      } catch (error) {
+        console.error('error restoring note', error);
+        throw error;
       }
     },
   });

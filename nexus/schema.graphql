@@ -19,6 +19,7 @@ type Mutation {
   loginUser(password: String, username: String): Boolean
   logoutUser: Boolean
   restoreNote(deletedAt: String, id: String, isDeleted: Boolean): NoteType
+  restorePassword(deletedAt: String, id: String, isDeleted: Boolean): PasswordType
   restoreTodo(deletedAt: String, id: String, isDeleted: Boolean): TodoType
   updateNote(body: String, deletedAt: String, id: String, isDeleted: Boolean, title: String): NoteType
   updatePassword(deletedAt: String, email: String, fieldname: String, id: String, isDeleted: Boolean, password: String, username: String): PasswordType
