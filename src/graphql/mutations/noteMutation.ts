@@ -8,6 +8,7 @@ import {
 } from '../../constants';
 import { Mycontext } from '../../interfaces';
 // import { isAuthenticated } from '../../util';
+import { resolve } from 'path';
 import { ZodNote } from '../validator/schema';
 
 const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
@@ -168,6 +169,70 @@ export const noteMutation = (t: any) => {
         return note;
       } catch (error) {
         console.error('error loggin out', error);
+        throw error;
+      }
+    },
+  });
+  t.field('restoreNote', {
+    type: 'NoteType',
+    args: {
+      id: stringArg(),
+      isDeleted: booleanArg(),
+      deletedAt: stringArg(),
+    },
+    resolve: async (
+      _: unknown,
+      {
+        id,
+        deletedAt,
+        isDeleted,
+      }: Pick<Note, 'id' | 'isDeleted' | 'deletedAt'>,
+      context: Mycontext
+    ) => {
+      try {
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        const validation = ZodNote.pick({
+          isDeleted: true,
+          deletedAt: true,
+          userId: true,
+        }).safeParse({ isDeleted, deletedAt });
+
+        if (!validation.success) {
+          validation.error.issues.map((issue) => {
+            console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
+          });
+          throw new Error(INVALID_CREDENTIALS);
+        }
+
+        const selectedNote = await context.prisma.note.findUnique({
+          where: { id },
+        });
+        if (!selectedNote) throw new Error(NOT_FOUND);
+        console.log("selectedNote", selectedNote);
+        if (selectedNote.isDeleted === false && selectedNote.deletedAt) return;
+        const updatedNote = await context.prisma.note.update({
+          where: { id },
+          data: {
+            isDeleted: false,
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            isDeleted: true,
+            updatedAt: true,
+            user: {
+              select: {
+                email: true,
+                username: true
+              }
+            }
+          }
+        });
+        return updatedNote;
+      } catch (error) {
+        console.error('error restoring note', error);
         throw error;
       }
     },
