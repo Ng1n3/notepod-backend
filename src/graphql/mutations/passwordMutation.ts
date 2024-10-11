@@ -196,9 +196,9 @@ export const passwordMutation = (t: any) => {
               select: {
                 email: true,
                 username: true,
-              }
-            }
-          }
+              },
+            },
+          },
         });
         return updatedPasswordField;
       } catch (error) {
@@ -249,7 +249,6 @@ export const passwordMutation = (t: any) => {
         const validation = ZodPassword.pick({
           isDeleted: true,
           deletedAt: true,
-          userId: true,
         }).safeParse({ isDeleted, deletedAt });
 
         if (!validation.success) {
@@ -259,12 +258,13 @@ export const passwordMutation = (t: any) => {
           throw new Error(INVALID_CREDENTIALS);
         }
 
-        const selectedTodo = await context.prisma.todos.findUnique({
+        const selectedPassword = await context.prisma.password.findUnique({
           where: { id },
         });
-        if (!selectedTodo) throw new Error(NOT_FOUND);
-        if (selectedTodo.isDeleted === false && selectedTodo.deletedAt) return;
-        const updatedTodo = await context.prisma.todos.update({
+        if (!selectedPassword) throw new Error(NOT_FOUND);
+        if (selectedPassword.isDeleted === false && selectedPassword.deletedAt)
+          return;
+        const updatedPassword = await context.prisma.password.update({
           where: { id },
           data: {
             isDeleted: false,
@@ -272,21 +272,21 @@ export const passwordMutation = (t: any) => {
           },
           select: {
             id: true,
-            title: true,
-            body: true,
-            priority: true,
-            dueDate: true,
+            fieldname: true,
+            email: true,
+            userId: true,
+            password: true,
             isDeleted: true,
             updatedAt: true,
             user: {
               select: {
                 email: true,
-                username: true
-              }
-            }
-          }
+                username: true,
+              },
+            },
+          },
         });
-        return updatedTodo;
+        return updatedPassword;
       } catch (error) {
         console.error('error restoring note', error);
         throw error;
@@ -294,3 +294,4 @@ export const passwordMutation = (t: any) => {
     },
   });
 };
+
