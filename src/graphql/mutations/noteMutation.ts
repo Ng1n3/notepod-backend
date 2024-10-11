@@ -208,7 +208,6 @@ export const noteMutation = (t: any) => {
           where: { id },
         });
         if (!selectedNote) throw new Error(NOT_FOUND);
-        console.log("selectedNote", selectedNote);
         if (selectedNote.isDeleted === false && selectedNote.deletedAt) return;
         const updatedNote = await context.prisma.note.update({
           where: { id },
@@ -231,6 +230,71 @@ export const noteMutation = (t: any) => {
           }
         });
         return updatedNote;
+      } catch (error) {
+        console.error('error restoring note', error);
+        throw error;
+      }
+    },
+  });
+  t.field('restoreTodo', {
+    type: 'TodoType',
+    args: {
+      id: stringArg(),
+      isDeleted: booleanArg(),
+      deletedAt: stringArg(),
+    },
+    resolve: async (
+      _: unknown,
+      {
+        id,
+        deletedAt,
+        isDeleted,
+      }: Pick<Note, 'id' | 'isDeleted' | 'deletedAt'>,
+      context: Mycontext
+    ) => {
+      try {
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        const validation = ZodNote.pick({
+          isDeleted: true,
+          deletedAt: true,
+          userId: true,
+        }).safeParse({ isDeleted, deletedAt });
+
+        if (!validation.success) {
+          validation.error.issues.map((issue) => {
+            console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
+          });
+          throw new Error(INVALID_CREDENTIALS);
+        }
+
+        const selectedTodo = await context.prisma.todos.findUnique({
+          where: { id },
+        });
+        if (!selectedTodo) throw new Error(NOT_FOUND);
+        if (selectedTodo.isDeleted === false && selectedTodo.deletedAt) return;
+        const updatedTodo = await context.prisma.todos.update({
+          where: { id },
+          data: {
+            isDeleted: false,
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            priority: true,
+            dueDate: true,
+            isDeleted: true,
+            updatedAt: true,
+            user: {
+              select: {
+                email: true,
+                username: true
+              }
+            }
+          }
+        });
+        return updatedTodo;
       } catch (error) {
         console.error('error restoring note', error);
         throw error;
