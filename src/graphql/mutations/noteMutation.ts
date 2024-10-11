@@ -224,10 +224,59 @@ export const noteMutation = (t: any) => {
             user: {
               select: {
                 email: true,
-                username: true
-              }
-            }
-          }
+                username: true,
+              },
+            },
+          },
+        });
+        return updatedNote;
+      } catch (error) {
+        console.error('error restoring note', error);
+        throw error;
+      }
+    },
+  });
+  t.field('softDeleteNote', {
+    type: 'NoteType',
+    args: {
+      id: stringArg(),
+      isDeleted: booleanArg(),
+      deletedAt: stringArg(),
+    },
+    resolve: async (
+      _: unknown,
+      { id }: Pick<Note, 'id'>,
+      context: Mycontext
+    ) => {
+      try {
+        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+
+        const selectedNote = await context.prisma.note.findUnique({
+          where: { id },
+        });
+        if (!selectedNote) throw new Error(NOT_FOUND);
+        if (selectedNote.isDeleted && selectedNote.deletedAt)
+          return selectedNote;
+        const updatedNote = await context.prisma.note.update({
+          where: { id },
+          data: {
+            isDeleted: true,
+            deletedAt: new Date(),
+          },
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            isDeleted: true,
+            deletedAt: true,
+            updatedAt: true,
+            user: {
+              select: {
+                email: true,
+                username: true,
+              },
+            },
+          },
         });
         return updatedNote;
       } catch (error) {

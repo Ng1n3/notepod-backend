@@ -119,6 +119,7 @@ export interface NexusGenFieldTypes {
     restoreNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     restorePassword: NexusGenRootTypes['PasswordType'] | null; // PasswordType
     restoreTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
+    softDeleteNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     updateNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     updatePassword: NexusGenRootTypes['PasswordType'] | null; // PasswordType
     updateTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
@@ -198,6 +199,7 @@ export interface NexusGenFieldTypeNames {
     restoreNote: 'NoteType'
     restorePassword: 'PasswordType'
     restoreTodo: 'TodoType'
+    softDeleteNote: 'NoteType'
     updateNote: 'NoteType'
     updatePassword: 'PasswordType'
     updateTodo: 'TodoType'
@@ -316,6 +318,11 @@ export interface NexusGenArgTypes {
       isDeleted?: boolean | null; // Boolean
     }
     restoreTodo: { // args
+      deletedAt?: string | null; // String
+      id?: string | null; // String
+      isDeleted?: boolean | null; // Boolean
+    }
+    softDeleteNote: { // args
       deletedAt?: string | null; // String
       id?: string | null; // String
       isDeleted?: boolean | null; // Boolean
