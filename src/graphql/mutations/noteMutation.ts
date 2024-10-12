@@ -189,6 +189,7 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
+        console.log("hi we got here");
         // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         const validation = ZodNote.pick({
           isDeleted: true,
