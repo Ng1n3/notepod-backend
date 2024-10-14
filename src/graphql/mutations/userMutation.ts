@@ -12,7 +12,7 @@ import { hashPassword, isAuthenticated, verifyPassword } from '../../util';
 import { ZodUpdateUser, ZodUser } from '../validator/schema';
 
 export const userMutation = (t: any) => {
-  t.boolean('createUser', {
+  t.field('createUser', {
     args: {
       username: stringArg(),
       email: stringArg(),
@@ -25,7 +25,7 @@ export const userMutation = (t: any) => {
         password,
         email,
       }: Pick<User, 'username' | 'password' | 'email'>,
-       context: Mycontext
+      context: Mycontext
     ) => {
       try {
         if (isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
@@ -50,36 +50,36 @@ export const userMutation = (t: any) => {
         const hashedPassword = await hashPassword(password);
         const newUser = await context.prisma.user.create({
           data: { username, email, password: hashedPassword },
-          select: { id: true },
+          select: { id: true, username: true, email: true },
         });
 
         context.session.userId = newUser.id;
         // session['userId'] = user.id;
-        return true;
+        return newUser;
       } catch (error) {
         console.error(error);
         return new Error('There is an error');
       }
     },
   });
-  t.boolean('loginUser', {
+  t.field('loginUser', {
     args: {
-      username: stringArg(),
+      email: stringArg(),
       password: stringArg(),
     },
     resolve: async (
       _: unknown,
-      { username, password }: Pick<User, 'username' | 'password'>,
+      { email, password }: Pick<User, 'email' | 'password'>,
       context: Mycontext
     ) => {
       try {
         if (isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
 
         const validation = ZodUser.pick({
-          username: true,
+          email: true,
           password: true,
         }).safeParse({
-          username,
+          email,
           password,
         });
 
@@ -92,7 +92,13 @@ export const userMutation = (t: any) => {
 
         const user = await context.prisma.user.findUnique({
           where: {
-            username: username,
+            email: email.toLowerCase(),
+          },
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            password: true,
           },
         });
         if (!user) throw new Error(INVALID_CREDENTIALS);
@@ -101,10 +107,14 @@ export const userMutation = (t: any) => {
         if (!isCorrect) return new Error(INVALID_CREDENTIALS);
 
         context.session['userId'] = user.id;
-        return true;
+        const { password:_, ...userWithoutPassword } = user;
+        return userWithoutPassword;
       } catch (error) {
-        console.error(error);
-        return false;
+        console.error('Login error:', error);
+        if (error instanceof Error) {
+          throw new Error(error.message);
+        }
+        throw new Error('An unexpected error occurred during login');
       }
     },
   });

@@ -308,8 +308,8 @@ export interface NexusGenArgTypes {
       id?: string | null; // String
     }
     loginUser: { // args
+      email?: string | null; // String
       password?: string | null; // String
-      username?: string | null; // String
     }
     restoreNote: { // args
       deletedAt?: string | null; // String
