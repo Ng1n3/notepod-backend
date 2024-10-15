@@ -7,7 +7,7 @@ import {
 } from '../../constants';
 import { Mycontext } from '../../interfaces';
 import { isAuthenticated } from '../../util';
-import { ZodNote, ZodTodo } from '../validator/schema';
+import { ZodTodo } from '../validator/schema';
 
 const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
 

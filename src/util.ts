@@ -25,4 +25,4 @@ export const isAuthenticated = (context: Mycontext): boolean => {
   // return false;
 };
 
-export const DateTime = asNexusMethod(GraphQLDateTime, 'dateTime')
+export const DateTime = asNexusMethod(GraphQLDateTime as any, 'dateTime')
