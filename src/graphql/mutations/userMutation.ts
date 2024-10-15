@@ -13,6 +13,7 @@ import { ZodUpdateUser, ZodUser } from '../validator/schema';
 
 export const userMutation = (t: any) => {
   t.field('createUser', {
+    type: 'UserType',
     args: {
       username: stringArg(),
       email: stringArg(),
@@ -63,6 +64,7 @@ export const userMutation = (t: any) => {
     },
   });
   t.field('loginUser', {
+    type: 'UserType',
     args: {
       email: stringArg(),
       password: stringArg(),
@@ -107,7 +109,7 @@ export const userMutation = (t: any) => {
         if (!isCorrect) return new Error(INVALID_CREDENTIALS);
 
         context.session['userId'] = user.id;
-        const { password:_, ...userWithoutPassword } = user;
+        const { password: _, ...userWithoutPassword } = user;
         return userWithoutPassword;
       } catch (error) {
         console.error('Login error:', error);
@@ -155,6 +157,25 @@ export const userMutation = (t: any) => {
       } catch (error) {
         console.error('Error loggin gout', error);
         return false;
+      }
+    },
+  });
+
+  t.field('currentUser', {
+    type: 'UserType',
+    resolve: async (_: unknown, __: unknown, context: Mycontext) => {
+      try {
+        if (!context.session.userId) return null;
+        return context.prisma.user.findUnique({
+          where: { id: context.session.userId },
+          select: { id: true, email: true, username: true },
+        });
+      } catch (error) {
+        console.error('Login error:', error);
+        if (error instanceof Error) {
+          throw new Error(error.message);
+        }
+        throw new Error('An unexpected error occurred during login');
       }
     },
   });

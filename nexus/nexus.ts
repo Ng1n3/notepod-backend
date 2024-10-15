@@ -109,12 +109,13 @@ export interface NexusGenFieldTypes {
     createNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     createPassword: NexusGenRootTypes['PasswordType'] | null; // PasswordType
     createTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
-    createUser: boolean | null; // Boolean
+    createUser: NexusGenRootTypes['UserType'] | null; // UserType
+    currentUser: NexusGenRootTypes['UserType'] | null; // UserType
     deleteNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     deleteTodo: boolean | null; // Boolean
     deleteUser: boolean | null; // Boolean
     deletedPassword: boolean | null; // Boolean
-    loginUser: boolean | null; // Boolean
+    loginUser: NexusGenRootTypes['UserType'] | null; // UserType
     logoutUser: boolean | null; // Boolean
     restoreNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     restorePassword: NexusGenRootTypes['PasswordType'] | null; // PasswordType
@@ -191,12 +192,13 @@ export interface NexusGenFieldTypeNames {
     createNote: 'NoteType'
     createPassword: 'PasswordType'
     createTodo: 'TodoType'
-    createUser: 'Boolean'
+    createUser: 'UserType'
+    currentUser: 'UserType'
     deleteNote: 'NoteType'
     deleteTodo: 'Boolean'
     deleteUser: 'Boolean'
     deletedPassword: 'Boolean'
-    loginUser: 'Boolean'
+    loginUser: 'UserType'
     logoutUser: 'Boolean'
     restoreNote: 'NoteType'
     restorePassword: 'PasswordType'
