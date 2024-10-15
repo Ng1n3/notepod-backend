@@ -110,7 +110,6 @@ export interface NexusGenFieldTypes {
     createPassword: NexusGenRootTypes['PasswordType'] | null; // PasswordType
     createTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
     createUser: NexusGenRootTypes['UserType'] | null; // UserType
-    currentUser: NexusGenRootTypes['UserType'] | null; // UserType
     deleteNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     deleteTodo: boolean | null; // Boolean
     deleteUser: boolean | null; // Boolean
@@ -151,6 +150,7 @@ export interface NexusGenFieldTypes {
     username: string | null; // String
   }
   Query: { // field return type
+    currentUser: NexusGenRootTypes['UserType'] | null; // UserType
     getNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     getNotes: Array<NexusGenRootTypes['NoteType'] | null> | null; // [NoteType]
     getPasswordField: NexusGenRootTypes['PasswordType'] | null; // PasswordType
@@ -193,7 +193,6 @@ export interface NexusGenFieldTypeNames {
     createPassword: 'PasswordType'
     createTodo: 'TodoType'
     createUser: 'UserType'
-    currentUser: 'UserType'
     deleteNote: 'NoteType'
     deleteTodo: 'Boolean'
     deleteUser: 'Boolean'
@@ -234,6 +233,7 @@ export interface NexusGenFieldTypeNames {
     username: 'String'
   }
   Query: { // field return type name
+    currentUser: 'UserType'
     getNote: 'NoteType'
     getNotes: 'NoteType'
     getPasswordField: 'PasswordType'

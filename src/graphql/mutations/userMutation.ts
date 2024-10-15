@@ -161,25 +161,6 @@ export const userMutation = (t: any) => {
     },
   });
 
-  t.field('currentUser', {
-    type: 'UserType',
-    resolve: async (_: unknown, __: unknown, context: Mycontext) => {
-      try {
-        if (!context.session.userId) return null;
-        return context.prisma.user.findUnique({
-          where: { id: context.session.userId },
-          select: { id: true, email: true, username: true },
-        });
-      } catch (error) {
-        console.error('Login error:', error);
-        if (error instanceof Error) {
-          throw new Error(error.message);
-        }
-        throw new Error('An unexpected error occurred during login');
-      }
-    },
-  });
-
   t.boolean('updateUser', {
     args: {
       id: stringArg(),

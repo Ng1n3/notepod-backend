@@ -181,7 +181,7 @@ export const Query = queryType({
               user: true,
             },
           });
- 
+
           return passwordFields.map((field) => ({
             id: field.id,
             fieldname: field.fieldname,
@@ -319,6 +319,24 @@ export const Query = queryType({
         } catch (error) {
           console.error('Error fetching Passwordfields: ', error);
           throw error;
+        }
+      },
+    });
+    t.field('currentUser', {
+      type: 'UserType',
+      resolve: async (_: unknown, __: unknown, context: Mycontext) => {
+        try {
+          if (!context.session.userId) return null;
+          return context.prisma.user.findUnique({
+            where: { id: context.session.userId },
+            select: { id: true, email: true, username: true },
+          });
+        } catch (error) {
+          console.error('Login error:', error);
+          if (error instanceof Error) {
+            throw new Error(error.message);
+          }
+          throw new Error('An unexpected error occurred during login');
         }
       },
     });

@@ -12,7 +12,6 @@ type Mutation {
   createPassword(email: String, fieldname: String, password: String, username: String): PasswordType
   createTodo(body: String, deletedAt: String, dueDate: String, isDeleted: Boolean, priority: String, title: String): TodoType
   createUser(email: String, password: String, username: String): UserType
-  currentUser: UserType
   deleteNote(id: String): NoteType
   deleteTodo(id: String): Boolean
   deleteUser(id: String): Boolean
@@ -56,6 +55,7 @@ type PasswordType {
 }
 
 type Query {
+  currentUser: UserType
   getNote(id: String!): NoteType
   getNotes(cursor: Int, isDeleted: Boolean): [NoteType]
   getPasswordField(id: String!): PasswordType
