@@ -1,16 +1,16 @@
 import { Note } from '@prisma/client';
 import { booleanArg, stringArg } from 'nexus';
 import {
+  ALREADY_TAKEN,
   INVALID_CREDENTIALS,
-  // NOT_AUTHENTICATED,
-  // NOT_AUTHORIZED,
+  NOT_AUTHENTICATED,
+  NOT_AUTHORIZED,
   NOT_FOUND,
 } from '../../constants';
 import { Mycontext } from '../../interfaces';
-// import { isAuthenticated } from '../../util';
+import { isAuthenticated } from '../../util';
 import { ZodNote } from '../validator/schema';
 
-const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
 export const noteMutation = (t: any) => {
   t.field('createNote', {
     type: 'NoteType',
@@ -31,7 +31,7 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        // if (!isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
 
         const validation = ZodNote.pick({
           title: true,
@@ -44,13 +44,21 @@ export const noteMutation = (t: any) => {
           body,
           isDeleted,
           deletedAt: deletedAt ? new Date(deletedAt).toISOString() : null,
+          userId: context.session.userId,
         });
 
         if (!validation.success) throw new Error(INVALID_CREDENTIALS);
 
-        // const userId = context.session.userId || 'temp-user-id';
-        // if (!context.session.userId)
-        //   throw new Error('User Id is required to create a note');
+        const normalizedTitle = title.trim().toLowerCase();
+        const checkExistingNote = await context.prisma.note.findUnique({
+          where: { title: normalizedTitle },
+        });
+
+        if (checkExistingNote) throw new Error(ALREADY_TAKEN);
+
+        const userId = context.session.userId;
+        if (!context.session.userId)
+          throw new Error('User Id is required to create a note');
 
         const note = await context.prisma.note.create({
           data: {
@@ -58,7 +66,8 @@ export const noteMutation = (t: any) => {
             body,
             isDeleted: isDeleted ?? false,
             deletedAt: deletedAt ? new Date(deletedAt) : null,
-            userId: FIXED_USER_ID,
+            // userId: FIXED_USER_ID,
+            userId: userId as string,
           },
           select: {
             id: true,
@@ -78,8 +87,11 @@ export const noteMutation = (t: any) => {
 
         // console.log('backend note', note);
         return note;
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
+        if (error.code === 'P2002') {
+          throw new Error(ALREADY_TAKEN); // Handle unique constraint violation
+        }
         throw error;
       }
     },
@@ -105,7 +117,7 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        // if (!isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
         const validation = ZodNote.pick({
           title: true,
           body: true,
@@ -121,8 +133,8 @@ export const noteMutation = (t: any) => {
           throw new Error(INVALID_CREDENTIALS);
         }
 
-        // if (!context.session.userId)
-        //   throw new Error('User Id is required to create a note');
+        if (!context.session.userId)
+          throw new Error('User Id is required to create a note');
 
         const note = await context.prisma.note.findUnique({
           where: { id },
@@ -158,7 +170,7 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         const note = await context.prisma.note.delete({
           where: {
             id,
@@ -189,8 +201,8 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        console.log("hi we got here");
-        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        console.log('hi we got here');
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         const validation = ZodNote.pick({
           isDeleted: true,
           deletedAt: true,
@@ -247,7 +259,7 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
 
         const selectedNote = await context.prisma.note.findUnique({
           where: { id },

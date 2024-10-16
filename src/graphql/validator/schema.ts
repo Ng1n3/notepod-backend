@@ -11,7 +11,8 @@ export const ZodUser = z.object({
     .min(5, { message: 'Must be 5 or more characters long' })
     .max(20, { message: 'Must be 20 or less characters long' }),
   note: z.array(z.lazy(() => ZodNote)).optional(),
-  todo: z.array(z.lazy(() => ZodTodo)).optional(),
+  todos: z.array(z.lazy(() => ZodTodo)).optional(),
+  passwords: z.array(z.lazy(() => ZodPassword)).optional()
 });
 
 export const ZodUpdateUser = z.object({
@@ -29,7 +30,7 @@ export const ZodNote = z.object({
     .optional(),
   body: z.string().optional(),
   isDeleted: z.boolean().default(false).optional(),
-  userId: z.string().uuid().optional(),
+  userId: z.string().uuid(),
   deletedAt: z.date().nullable().optional(),
   updatedAt: z.date().nullable().optional(),
 });

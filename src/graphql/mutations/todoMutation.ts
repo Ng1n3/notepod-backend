@@ -91,7 +91,7 @@ export const todoMutation = (t: any) => {
             },
           },
         });
-        console.log('backend todo', todo);
+        // console.log('backend todo', todo);
         return todo;
       } catch (error) {
         console.error(error);

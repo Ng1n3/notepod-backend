@@ -5,3 +5,4 @@ export const INVALID_CREDENTIALS = 'Invalid Credentials';
 export const ALREADY_TAKEN = 'Already Taken'
 export const INTERNAL_SERVER_ERROR = 'Internal Server Error'
 export const ROWS_LIMIT = 10;
+export const DUPLICATE_ERROR = 'This already exists, try something new'

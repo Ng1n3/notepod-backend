@@ -1,12 +1,12 @@
 import { booleanArg, intArg, list, nonNull, queryType, stringArg } from 'nexus';
 
 import {
-  // NOT_AUTHENTICATED,
+  NOT_AUTHENTICATED,
   ROWS_LIMIT,
 } from '../constants';
 import { Icursor, Mycontext } from '../interfaces';
 // import { GetAllUsers } from './types/GetAllUsers';
-// import { isAuthenticated } from '../util';
+import { isAuthenticated } from '../util';
 import { NoteType } from './types/NoteTypes';
 import { PasswordType } from './types/PasswordTypes';
 import { TodoType } from './types/TodoTypes';
@@ -25,7 +25,7 @@ export const Query = queryType({
       },
       resolve: async (_, { cursor }: Icursor, context: Mycontext) => {
         try {
-          // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
 
           const users = await context.prisma.user.findMany({
             take: ROWS_LIMIT,
@@ -61,12 +61,13 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
           const notes = await context.prisma.note.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
             where: {
               isDeleted: isDeleted !== undefined ? isDeleted : undefined,
+              userId: context.session.userId
             },
             select: {
               id: true,
@@ -110,7 +111,7 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
           const todos = await context.prisma.todos.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
@@ -163,7 +164,7 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
           const passwordFields = await context.prisma.password.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
@@ -209,6 +210,8 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
+          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+
           const note = await context.prisma.note.findUnique({
             where: { id },
             select: {
@@ -254,6 +257,8 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
+          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+
           const todo = await context.prisma.todos.findUnique({
             where: { id },
             select: {
@@ -294,6 +299,8 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
+          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+
           const password = await context.prisma.password.findUnique({
             where: { id },
             select: {

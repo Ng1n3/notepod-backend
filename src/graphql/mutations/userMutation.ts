@@ -103,12 +103,16 @@ export const userMutation = (t: any) => {
             password: true,
           },
         });
+
+        // console.log("user from backend", user);
         if (!user) throw new Error(INVALID_CREDENTIALS);
 
         const isCorrect = await verifyPassword(password, user.password);
         if (!isCorrect) return new Error(INVALID_CREDENTIALS);
 
         context.session['userId'] = user.id;
+        // console.log("Session after login", context.session);
+        await context.session.save();
         const { password: _, ...userWithoutPassword } = user;
         return userWithoutPassword;
       } catch (error) {

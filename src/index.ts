@@ -11,7 +11,7 @@ import config from './config';
 import { getMyPrismaClient } from './db';
 import { getSchema } from './graphql/Schema';
 import { Mycontext } from './interfaces';
-import { isProd } from './util';
+// import { isProd } from './util';
 import morgan from 'morgan';
 
 dotenv.config();
@@ -19,7 +19,7 @@ const app: Application = express();
 const RedisClient = new Redis();
 const PORT: string = process.env.PORT!;
 app.use(express.json());
-app.use(morgan('dev'))
+app.use(morgan('dev'));
 
 app.use(
   session({
@@ -31,7 +31,8 @@ app.use(
     cookie: {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24,
-      secure: isProd(),
+      // secure: isProd(),
+      secure: false,
       sameSite: 'lax',
     },
   })
@@ -48,7 +49,10 @@ const main = async () => {
   await server.start();
   app.use(
     '/graphql',
-    cors(),
+    cors({
+      origin: 'http://localhost:5173',
+      credentials: true,
+    }),
     express.json(),
     expressMiddleware(server, {
       context: async ({
