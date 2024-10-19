@@ -49,9 +49,9 @@ export const noteMutation = (t: any) => {
 
         if (!validation.success) throw new Error(INVALID_CREDENTIALS);
 
-        const normalizedTitle = title.trim().toLowerCase();
+        // const normalizedTitle = title.trim().toLowerCase();
         const checkExistingNote = await context.prisma.note.findUnique({
-          where: { title: normalizedTitle },
+          where: { title },
         });
 
         if (checkExistingNote) throw new Error(ALREADY_TAKEN);
@@ -124,7 +124,13 @@ export const noteMutation = (t: any) => {
           isDeleted: true,
           deletedAt: true,
           userId: true,
-        }).safeParse({ title, body, isDeleted, deletedAt });
+        }).safeParse({
+          title,
+          body,
+          isDeleted,
+          deletedAt,
+          userId: context.session.userId,
+        });
 
         if (!validation.success) {
           validation.error.issues.map((issue) => {
@@ -142,6 +148,8 @@ export const noteMutation = (t: any) => {
 
         if (!note) return new Error(NOT_FOUND);
 
+        const userId = context.session.userId;
+
         const updatedNote = await context.prisma.note.update({
           where: { id },
           data: {
@@ -149,8 +157,25 @@ export const noteMutation = (t: any) => {
             body: body ?? note.body,
             deletedAt: deletedAt ?? note.deletedAt,
             isDeleted: isDeleted ?? note.isDeleted,
+            userId,
           },
+          // select: {
+          //   id: true,
+          //   title: true,
+          //   body: true,
+          //   isDeleted: true,
+          //   deletedAt: true,
+          //   user: {
+          //     select: {
+          //       id: true,
+          //       email: true,
+          //       username: true,
+          //     },
+          // },
+          // },
         });
+
+        console.log('updated backend note', updatedNote);
 
         return updatedNote;
       } catch (error) {

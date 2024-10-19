@@ -117,6 +117,7 @@ export const Query = queryType({
             skip: cursor,
             where: {
               isDeleted: isDeleted !== undefined ? isDeleted : undefined,
+              userId: context.session.userId
             },
             select: {
               id: true,

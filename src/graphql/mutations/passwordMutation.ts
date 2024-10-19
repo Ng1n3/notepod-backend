@@ -41,7 +41,7 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         const validation = ZodPassword.pick({
           fieldname: true,
           email: true,
@@ -67,10 +67,10 @@ export const passwordMutation = (t: any) => {
           throw new Error(INVALID_CREDENTIALS);
         }
 
-        // if (!context.session.userId)
-        //   throw new Error(
-        //     'User Id is required to create a password field in notepod.xyz'
-        //   );
+        if (!context.session.userId)
+          throw new Error(
+            'User Id is required to create a password field in notepod.xyz'
+          );
 
         const passwordField = await context.prisma.password.create({
           data: {

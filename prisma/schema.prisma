@@ -39,6 +39,7 @@ model Note {
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @db.Timestamptz(6)
 
+  @@unique([title, userId])
   @@index([title, body], map: "quick_search_note")
   @@map("notes")
 }
