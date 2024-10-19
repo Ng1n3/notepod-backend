@@ -9,7 +9,7 @@ import { Mycontext } from '../../interfaces';
 import { isAuthenticated } from '../../util';
 import { ZodPassword } from '../validator/schema';
 
-const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
+// const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
 
 export const passwordMutation = (t: any) => {
   t.field('createPassword', {
@@ -56,7 +56,7 @@ export const passwordMutation = (t: any) => {
           password,
           username,
           isDeleted,
-          userId: FIXED_USER_ID,
+          userId: context.session.userId,
           deletedAt: deletedAt ? new Date(deletedAt).toISOString() : null,
         });
 
@@ -81,7 +81,7 @@ export const passwordMutation = (t: any) => {
             isDeleted: isDeleted ?? false,
             deletedAt: deletedAt ? new Date(deletedAt) : null,
             // userId: context.session.userId,
-            userId: FIXED_USER_ID,
+            userId: context.session.userId,
           },
           select: {
             id: true,
@@ -99,7 +99,7 @@ export const passwordMutation = (t: any) => {
             },
           },
         });
-        console.log('backend passwordField: ', passwordField);
+        // console.log('backend passwordField: ', passwordField);
         return passwordField;
       } catch (error) {
         console.error(error);
@@ -141,7 +141,7 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         const validation = ZodPassword.pick({
           fieldname: true,
           email: true,
@@ -165,8 +165,8 @@ export const passwordMutation = (t: any) => {
           throw new Error(INVALID_CREDENTIALS);
         }
 
-        // if (!context.session.userId)
-        //   throw new Error('User Id is required to create a password field');
+        if (!context.session.userId)
+          throw new Error('User Id is required to create a password field');
 
         const passwordField = await context.prisma.password.findUnique({
           where: { id },
@@ -245,7 +245,7 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
         const validation = ZodPassword.pick({
           isDeleted: true,
           deletedAt: true,
@@ -304,7 +304,7 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        // if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
 
         const selectedPassword = await context.prisma.password.findUnique({
           where: { id },
