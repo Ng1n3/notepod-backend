@@ -9,8 +9,6 @@ import { Mycontext } from '../../interfaces';
 import { isAuthenticated } from '../../util';
 import { ZodTodo } from '../validator/schema';
 
-const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
-
 export const todoMutation = (t: any) => {
   t.field('createTodo', {
     type: 'TodoType',
@@ -74,7 +72,7 @@ export const todoMutation = (t: any) => {
             priority,
             isDeleted: isDeleted,
             dueDate: dueDate ? new Date(dueDate) : undefined,
-            userId: FIXED_USER_ID,
+            userId: context.session.userId,
           },
           select: {
             id: true,

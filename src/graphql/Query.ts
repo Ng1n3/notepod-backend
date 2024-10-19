@@ -1,9 +1,6 @@
 import { booleanArg, intArg, list, nonNull, queryType, stringArg } from 'nexus';
 
-import {
-  NOT_AUTHENTICATED,
-  ROWS_LIMIT,
-} from '../constants';
+import { NOT_AUTHENTICATED, ROWS_LIMIT } from '../constants';
 import { Icursor, Mycontext } from '../interfaces';
 // import { GetAllUsers } from './types/GetAllUsers';
 import { isAuthenticated } from '../util';
@@ -67,7 +64,7 @@ export const Query = queryType({
             skip: cursor,
             where: {
               isDeleted: isDeleted !== undefined ? isDeleted : undefined,
-              userId: context.session.userId
+              userId: context.session.userId,
             },
             select: {
               id: true,
@@ -111,13 +108,14 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
+
           if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
           const todos = await context.prisma.todos.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
             where: {
               isDeleted: isDeleted !== undefined ? isDeleted : undefined,
-              userId: context.session.userId
+              userId: context.session.userId,
             },
             select: {
               id: true,
