@@ -20,6 +20,7 @@ export const isProd = () => process.env.NODE_ENV === 'production';
 
 export const isAuthenticated = (context: Mycontext): boolean => {
  const {session} = context
+//  console.log("session userID",session.userId);
  return !!session.userId;
   // if (context.session.userId) return true;
   // return false;
