@@ -72,6 +72,7 @@ export const passwordMutation = (t: any) => {
             'User Id is required to create a password field in notepod.xyz'
           );
 
+        console.log('PING!!!');
         const passwordField = await context.prisma.password.create({
           data: {
             email,
@@ -80,7 +81,6 @@ export const passwordMutation = (t: any) => {
             username,
             isDeleted: isDeleted ?? false,
             deletedAt: deletedAt ? new Date(deletedAt) : null,
-            // userId: context.session.userId,
             userId: context.session.userId,
           },
           select: {
@@ -102,6 +102,14 @@ export const passwordMutation = (t: any) => {
         // console.log('backend passwordField: ', passwordField);
         return passwordField;
       } catch (error) {
+        if (
+          error.code === 'P2002' &&
+          error.meta?.target?.includes('fieldname')
+        ) {
+          throw new Error(
+            'A password with this field name already exists for this user.'
+          );
+        }
         console.error(error);
         return false;
       }
@@ -343,4 +351,3 @@ export const passwordMutation = (t: any) => {
     },
   });
 };
-
