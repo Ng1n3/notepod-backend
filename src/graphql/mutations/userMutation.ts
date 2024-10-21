@@ -29,7 +29,7 @@ export const userMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
+        // if (isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
 
         const validation = ZodUser.pick({
           username: true,
@@ -42,10 +42,35 @@ export const userMutation = (t: any) => {
         });
 
         if (!validation.success) {
-          validation.error.issues.forEach((issue) => {
-            console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
-          });
-          throw new Error(INVALID_CREDENTIALS);
+          const firstIssue = validation.error.issues[0];
+          switch (firstIssue.path[0]) {
+            case 'email':
+              throw new Error('INVALID_EMAIL');
+            case 'password':
+              throw new Error('WEAK_PASSWORD');
+            case 'username':
+              throw new Error('INVALID_USERNAME');
+            default:
+              throw new Error('INVALID_INPUT');
+          }
+        }
+
+        const existingUser = await context.prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: email.toLowerCase() },
+              { username: username.toLowerCase() },
+            ],
+          },
+        });
+
+        if (existingUser) {
+          if (existingUser.email === email.toLowerCase()) {
+            throw new Error('EMAIL_EXISTS');
+          }
+          if (existingUser.username === username.toLowerCase()) {
+            throw new Error('USERNAME_EXISTS');
+          }
         }
 
         const hashedPassword = await hashPassword(password);
@@ -55,11 +80,13 @@ export const userMutation = (t: any) => {
         });
 
         context.session.userId = newUser.id;
-        // session['userId'] = user.id;
         return newUser;
       } catch (error) {
         console.error(error);
-        return new Error('There is an error');
+        if (error instanceof Error) {
+          throw error; // Re-throw the specific error
+        }
+        return new Error('UNKNOWN_ERROR');
       }
     },
   });
@@ -112,7 +139,7 @@ export const userMutation = (t: any) => {
 
         context.session['userId'] = user.id;
         // console.log("Session after login", context.session);
-        await context.session.save();
+        context.session.save();
         const { password: _, ...userWithoutPassword } = user;
         return userWithoutPassword;
       } catch (error) {
