@@ -159,6 +159,8 @@ export interface NexusGenFieldTypes {
     getTodos: Array<NexusGenRootTypes['TodoType'] | null> | null; // [TodoType]
     getUsers: Array<NexusGenRootTypes['UserType'] | null> | null; // [UserType]
     hello: string | null; // String
+    searchNote: Array<NexusGenRootTypes['NoteType'] | null> | null; // [NoteType]
+    searchTodo: Array<NexusGenRootTypes['TodoType'] | null> | null; // [TodoType]
   }
   TodoType: { // field return type
     body: string | null; // String
@@ -242,6 +244,8 @@ export interface NexusGenFieldTypeNames {
     getTodos: 'TodoType'
     getUsers: 'UserType'
     hello: 'String'
+    searchNote: 'NoteType'
+    searchTodo: 'TodoType'
   }
   TodoType: { // field return type name
     body: 'String'
@@ -391,6 +395,12 @@ export interface NexusGenArgTypes {
     }
     getUsers: { // args
       cursor?: number | null; // Int
+    }
+    searchNote: { // args
+      searchTerm: string; // String!
+    }
+    searchTodo: { // args
+      searchTerm: string; // String!
     }
   }
 }

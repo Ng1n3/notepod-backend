@@ -232,7 +232,7 @@ export const noteMutation = (t: any) => {
           isDeleted: true,
           deletedAt: true,
           userId: true,
-        }).safeParse({ isDeleted, deletedAt });
+        }).safeParse({ isDeleted, deletedAt, userId: context.session.userId });
 
         if (!validation.success) {
           validation.error.issues.map((issue) => {

@@ -108,7 +108,6 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-
           if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
           const todos = await context.prisma.todos.findMany({
             take: ROWS_LIMIT,
@@ -169,7 +168,7 @@ export const Query = queryType({
             skip: cursor,
             where: {
               isDeleted: isDeleted !== undefined ? isDeleted : undefined,
-              userId: context.session.userId
+              userId: context.session.userId,
             },
             select: {
               id: true,
@@ -344,6 +343,62 @@ export const Query = queryType({
             throw new Error(error.message);
           }
           throw new Error('An unexpected error occurred during login');
+        }
+      },
+    });
+    t.list.field('searchNote', {
+      type: 'NoteType',
+      args: {
+        searchTerm: nonNull(stringArg()),
+      },
+      resolve: async (_: unknown, { searchTerm }, context: Mycontext) => {
+        try {
+          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+
+          const notes = await context.prisma.note.findMany({
+            where: {
+              title: { contains: searchTerm, mode: 'insensitive' },
+              userId: context.session.userId,
+              // isDeleted: false
+            },
+          });
+          return notes;
+        } catch (error) {
+          console.error('search error:', error);
+          if (error instanceof Error) {
+            throw new Error(error.message);
+          }
+          throw new Error(
+            `An unexpected error occcured when trying to searching for ${searchTerm}`
+          );
+        }
+      },
+    });
+    t.list.field('searchTodo', {
+      type: 'TodoType',
+      args: {
+        searchTerm: nonNull(stringArg()),
+      },
+      resolve: async (_: unknown, { searchTerm }, context: Mycontext) => {
+        try {
+          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+
+          const todos = await context.prisma.todos.findMany({
+            where: {
+              title: { contains: searchTerm, mode: 'insensitive' },
+              userId: context.session.userId,
+              // isDeleted: false
+            },
+          });
+          return todos;
+        } catch (error) {
+          console.error('search error:', error);
+          if (error instanceof Error) {
+            throw new Error(error.message);
+          }
+          throw new Error(
+            `An unexpected error occcured when trying to searching for ${searchTerm}`
+          );
         }
       },
     });

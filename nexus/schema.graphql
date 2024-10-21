@@ -64,6 +64,8 @@ type Query {
   getTodos(cursor: Int, isDeleted: Boolean): [TodoType]
   getUsers(cursor: Int): [UserType]
   hello: String
+  searchNote(searchTerm: String!): [NoteType]
+  searchTodo(searchTerm: String!): [TodoType]
 }
 
 type TodoType {
