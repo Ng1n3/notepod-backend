@@ -6,7 +6,12 @@ import {
   NOT_AUTHENTICATED,
   NOT_AUTHORIZED,
   NOT_FOUND,
+  UNKNOWN_SESSION,
 } from '../../constants';
+import { AuthenticationError } from '../../errors/AuthenticationError';
+import { BaseError } from '../../errors/BaseError';
+import { ConflictError } from '../../errors/ConflictError';
+import { ValidationError } from '../../errors/ValidationError';
 import { Mycontext } from '../../interfaces';
 import { hashPassword, isAuthenticated, verifyPassword } from '../../util';
 import { ZodUpdateUser, ZodUser } from '../validator/schema';
@@ -45,13 +50,13 @@ export const userMutation = (t: any) => {
           const firstIssue = validation.error.issues[0];
           switch (firstIssue.path[0]) {
             case 'email':
-              throw new Error('INVALID_EMAIL');
+              throw new ValidationError('INVALID_EMAIL');
             case 'password':
-              throw new Error('WEAK_PASSWORD');
+              throw new ValidationError('WEAK_PASSWORD');
             case 'username':
-              throw new Error('INVALID_USERNAME');
+              throw new ValidationError('INVALID_USERNAME');
             default:
-              throw new Error('INVALID_INPUT');
+              throw new ValidationError('INVALID_INPUT');
           }
         }
 
@@ -66,10 +71,10 @@ export const userMutation = (t: any) => {
 
         if (existingUser) {
           if (existingUser.email === email.toLowerCase()) {
-            throw new Error('EMAIL_EXISTS');
+            throw new ConflictError('EMAIL_EXISTS');
           }
           if (existingUser.username === username.toLowerCase()) {
-            throw new Error('USERNAME_EXISTS');
+            throw new ConflictError('USERNAME_EXISTS');
           }
         }
 
@@ -90,6 +95,7 @@ export const userMutation = (t: any) => {
       }
     },
   });
+
   t.field('loginUser', {
     type: 'UserType',
     args: {
@@ -102,7 +108,10 @@ export const userMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
+        if (!isAuthenticated(context))
+          return new AuthenticationError(NOT_AUTHORIZED, {
+            userId: context.session?.id,
+          });
 
         const validation = ZodUser.pick({
           email: true,
@@ -113,10 +122,12 @@ export const userMutation = (t: any) => {
         });
 
         if (!validation.success) {
-          validation.error.issues.forEach((issue) => {
+          validation.error.issues.map((issue) => {
             console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
-          throw new Error(INVALID_CREDENTIALS);
+          throw new ValidationError(INVALID_CREDENTIALS, {
+            validationErrors: validation.error.errors,
+          });
         }
 
         const user = await context.prisma.user.findUnique({
@@ -132,10 +143,10 @@ export const userMutation = (t: any) => {
         });
 
         // console.log("user from backend", user);
-        if (!user) throw new Error(INVALID_CREDENTIALS);
+        if (!user) throw new BaseError(NOT_FOUND, 'user not found', 404, true);
 
         const isCorrect = await verifyPassword(password, user.password);
-        if (!isCorrect) return new Error(INVALID_CREDENTIALS);
+        if (!isCorrect) return new AuthenticationError(INVALID_CREDENTIALS);
 
         context.session['userId'] = user.id;
         // console.log("Session after login", context.session);
@@ -143,15 +154,12 @@ export const userMutation = (t: any) => {
         const { password: _, ...userWithoutPassword } = user;
         return userWithoutPassword;
       } catch (error) {
-        console.error('Login error:', error);
-        if (error instanceof Error) {
-          throw new Error(error.message);
-        }
-        throw new Error('An unexpected error occurred during login');
+        throw error;
       }
     },
   });
-  t.boolean('deleteUser', {
+
+  t.field('deleteUser', {
     args: {
       id: stringArg(),
     },
@@ -161,38 +169,83 @@ export const userMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context))
+          return new AuthenticationError(NOT_AUTHENTICATED, {
+            userId: context.session?.id,
+          });
+
+        // const userId = context.session.userId;
+        if (!context.session.userId)
+          throw new AuthenticationError(UNKNOWN_SESSION);
 
         const user = await context.prisma.user.delete({
           where: {
             id: userDetail.id,
           },
         });
-        if (!user) throw new Error(NOT_FOUND);
-        return true;
+        if (!user) throw new BaseError(NOT_FOUND, 'user not found', 404, true);
+        return user;
       } catch (error) {
         console.error(error);
-        return false;
-      }
-    },
-  });
-  t.boolean('logoutUser', {
-    args: {},
-    resolve: async (_: unknown, __: unknown, context: Mycontext) => {
-      try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
-        context.session.destroy((err) => {
-          console.error('Error destroying Session', err);
-        });
-        return true;
-      } catch (error) {
-        console.error('Error loggin gout', error);
-        return false;
+        throw error;
       }
     },
   });
 
-  t.boolean('updateUser', {
+  t.field('logoutUser', {
+    args: {},
+    resolve: async (_: unknown, __: unknown, context: Mycontext) => {
+      try {
+        if (!isAuthenticated(context))
+          return new AuthenticationError(NOT_AUTHENTICATED, {
+            userId: context.session?.id,
+          });
+
+        if (!context.session.userId)
+          throw new AuthenticationError(UNKNOWN_SESSION);
+        // const userId = context.session.userId;
+        // context.session.destroy((err) => {
+        //   console.error('Error destroying Session', err);
+        // });
+
+        return new Promise((resolve, reject) => {
+          context.session.destroy((err) => {
+            if (err) {
+              console.error('Error destroying session:', err);
+              reject(
+                new BaseError(
+                  'SessionError',
+                  'Failed to log out the user',
+                  500,
+                  true,
+                  {
+                    originalError: err.message,
+                  }
+                )
+              );
+            } else {
+              resolve({ message: 'User logged out successfully' });
+            }
+          });
+        });
+      } catch (error: any) {
+        console.error('Error loggin gout', error);
+        throw error instanceof BaseError
+          ? error
+          : new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError: error.message,
+              }
+            );
+      }
+    },
+  });
+
+  t.fied('updateUser', {
     args: {
       id: stringArg(),
       password: stringArg(),
@@ -203,7 +256,14 @@ export const userMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context))
+          return new AuthenticationError(NOT_AUTHENTICATED, {
+            userId: context.session?.id,
+          });
+
+        // const userId = context.session.userId;
+        if (!context.session.userId)
+          throw new AuthenticationError(UNKNOWN_SESSION);
 
         const validation = ZodUpdateUser.pick({
           password: true,
@@ -213,20 +273,50 @@ export const userMutation = (t: any) => {
           validation.error.issues.map((issue) => {
             console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
-          throw new Error(INVALID_CREDENTIALS);
+          throw new ValidationError(INVALID_CREDENTIALS, {
+            validationErrors: validation.error.errors,
+          });
         }
-        await context.prisma.user.update({
-          where: {
-            id,
-          },
-          data: {
-            password,
+        const existingUser = await context.prisma.user.findUnique({
+          where: { id },
+        });
+        if (!existingUser) {
+          throw new BaseError('NotFoundError', 'User not found', 404, true, {
+            userId: id,
+          });
+        }
+
+        const hashedPassword = await hashPassword(password);
+
+        // Update the user
+        const updatedUser = await context.prisma.user.update({
+          where: { id },
+          data: { password: hashedPassword },
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            updatedAt: true,
           },
         });
-        return true;
-      } catch (error) {
+
+        return {
+          message: 'User updated successfully',
+          user: updatedUser,
+        };
+      } catch (error: any) {
         console.error(error);
-        return false;
+        throw error instanceof BaseError
+          ? error
+          : new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError: error.message,
+              }
+            );
       }
     },
   });
