@@ -1,12 +1,21 @@
 import { Password } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { booleanArg, stringArg } from 'nexus';
 import {
+  ALREADY_TAKEN,
+  DATABASE_ERROR,
   INVALID_CREDENTIALS,
   NOT_AUTHENTICATED,
   NOT_FOUND,
+  UNKNOWN_SESSION,
 } from '../../constants';
+import { AuthenticationError } from '../../errors/AuthenticationError';
+import { BaseError } from '../../errors/BaseError';
+import { ConflictError } from '../../errors/ConflictError';
+import { DatabaseError } from '../../errors/DatabaseError';
+import { ValidationError } from '../../errors/ValidationError';
 import { Mycontext } from '../../interfaces';
-import { isAuthenticated } from '../../util';
+import { generateUniqueTitle, isAuthenticated } from '../../util';
 import { ZodPassword } from '../validator/schema';
 
 // const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
@@ -41,7 +50,15 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context))
+          return new AuthenticationError(NOT_AUTHENTICATED, {
+            userId: context.session?.id,
+          });
+
+        const userId = context.session.userId;
+        if (!context.session.userId)
+          throw new AuthenticationError(UNKNOWN_SESSION);
+
         const validation = ZodPassword.pick({
           fieldname: true,
           email: true,
@@ -64,19 +81,22 @@ export const passwordMutation = (t: any) => {
           validation.error.issues.map((issue) => {
             console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
-          throw new Error(INVALID_CREDENTIALS);
+          throw new ValidationError(INVALID_CREDENTIALS, {
+            validationErrors: validation.error.errors,
+          });
         }
 
-        if (!context.session.userId)
-          throw new Error(
-            'User Id is required to create a password field in notepod.xyz'
-          );
+        const uniqueFieldName = await generateUniqueTitle(
+          context.prisma,
+          fieldname!,
+          userId!,
+          'todo'
+        );
 
-        console.log('PING!!!');
         const passwordField = await context.prisma.password.create({
           data: {
             email,
-            fieldname,
+            fieldname: uniqueFieldName,
             password,
             username,
             isDeleted: isDeleted ?? false,
@@ -103,18 +123,24 @@ export const passwordMutation = (t: any) => {
         return passwordField;
       } catch (error) {
         if (
-          error.code === 'P2002' &&
-          error.meta?.target?.includes('fieldname')
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'p2002'
         ) {
-          throw new Error(
-            'A password with this field name already exists for this user.'
-          );
+          throw new ConflictError(ALREADY_TAKEN, {
+            fieldname,
+            userId: context.session.userId,
+          }); // Handle unique constraint violation
         }
-        console.error(error);
-        return false;
+
+        if (error instanceof BaseError) throw error;
+
+        throw new DatabaseError(DATABASE_ERROR, {
+          originalError: error instanceof Error ? error.message : String(error),
+        });
       }
     },
   });
+
   t.field('updatePassword', {
     type: 'PasswordType',
     args: {
@@ -149,7 +175,15 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context))
+          return new AuthenticationError(NOT_AUTHENTICATED, {
+            userId: context.session?.id,
+          });
+
+        // const userId = context.session.userId;
+        if (!context.session.userId)
+          throw new AuthenticationError(UNKNOWN_SESSION);
+
         const validation = ZodPassword.pick({
           fieldname: true,
           email: true,
@@ -173,14 +207,14 @@ export const passwordMutation = (t: any) => {
           throw new Error(INVALID_CREDENTIALS);
         }
 
-        if (!context.session.userId)
-          throw new Error('User Id is required to create a password field');
-
         const passwordField = await context.prisma.password.findUnique({
           where: { id },
         });
 
-        if (!passwordField) throw new Error(NOT_FOUND);
+        if (!passwordField)
+          throw new BaseError(NOT_FOUND, 'Password not found', 404, true, {
+            id,
+          });
 
         const updatedPasswordField = await context.prisma.password.update({
           where: { id },
@@ -215,7 +249,8 @@ export const passwordMutation = (t: any) => {
       }
     },
   });
-  t.boolean('deletedPassword', {
+
+  t.field('deletedPassword', {
     args: {
       id: stringArg(),
     },
@@ -225,14 +260,35 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context))
+          return new AuthenticationError(NOT_AUTHENTICATED, {
+            userId: context.session?.id,
+          });
+
+        // const userId = context.session.userId;
+        if (!context.session.userId)
+          throw new AuthenticationError(UNKNOWN_SESSION);
+
+        const passwordField = await context.prisma.password.findUnique({
+          where: { id },
+        });
+
+        if (!passwordField)
+          return new BaseError(
+            NOT_FOUND,
+            'Password field not found',
+            404,
+            true,
+            { id }
+          );
+
         await context.prisma.password.delete({
           where: { id },
         });
-        return true;
+        return passwordField;
       } catch (error) {
         console.error(error);
-        return false;
+        throw error;
       }
     },
   });
@@ -253,7 +309,15 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context))
+          return new AuthenticationError(NOT_AUTHENTICATED, {
+            userId: context.session?.id,
+          });
+
+        // const userId = context.session.userId;
+        if (!context.session.userId)
+          throw new AuthenticationError(UNKNOWN_SESSION);
+
         const validation = ZodPassword.pick({
           isDeleted: true,
           deletedAt: true,
@@ -263,15 +327,26 @@ export const passwordMutation = (t: any) => {
           validation.error.issues.map((issue) => {
             console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
-          throw new Error(INVALID_CREDENTIALS);
+          throw new ValidationError(INVALID_CREDENTIALS, {
+            validationErrors: validation.error.errors,
+          });
         }
 
         const selectedPassword = await context.prisma.password.findUnique({
           where: { id },
         });
-        if (!selectedPassword) throw new Error(NOT_FOUND);
+        if (!selectedPassword)
+          throw new BaseError(
+            NOT_FOUND,
+            'Selected Password field not found',
+            404,
+            true,
+            { id }
+          );
+
         if (selectedPassword.isDeleted === false && selectedPassword.deletedAt)
           return;
+        
         const updatedPassword = await context.prisma.password.update({
           where: { id },
           data: {
@@ -312,12 +387,28 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+        if (!isAuthenticated(context))
+          return new AuthenticationError(NOT_AUTHENTICATED, {
+            userId: context.session?.id,
+          });
+
+        // const userId = context.session.userId;
+        if (!context.session.userId)
+          throw new AuthenticationError(UNKNOWN_SESSION);
 
         const selectedPassword = await context.prisma.password.findUnique({
           where: { id },
         });
-        if (!selectedPassword) throw new Error(NOT_FOUND);
+
+        if (!selectedPassword)
+          throw new BaseError(
+            NOT_FOUND,
+            'Selected Password not found',
+            404,
+            true,
+            { id }
+          );
+
         if (selectedPassword.isDeleted && selectedPassword.deletedAt)
           return selectedPassword;
         const updatedPassword = await context.prisma.password.update({

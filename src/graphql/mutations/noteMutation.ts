@@ -7,7 +7,6 @@ import {
   DATABASE_ERROR,
   INVALID_CREDENTIALS,
   NOT_AUTHENTICATED,
-  NOT_AUTHORIZED,
   NOT_FOUND,
   UNKNOWN_SESSION,
 } from '../../constants';
@@ -40,7 +39,7 @@ export const noteMutation = (t: any) => {
     ) => {
       try {
         if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHORIZED, {
+          return new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
 
@@ -63,6 +62,9 @@ export const noteMutation = (t: any) => {
         });
 
         if (!validation.success) {
+          validation.error.issues.map((issue) => {
+            console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
+          });
           throw new ValidationError(INVALID_CREDENTIALS, {
             validationErrors: validation.error.errors,
           });
@@ -142,7 +144,7 @@ export const noteMutation = (t: any) => {
     ) => {
       try {
         if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHORIZED, {
+          return new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
 
@@ -194,7 +196,7 @@ export const noteMutation = (t: any) => {
         return updatedNote;
       } catch (error) {
         console.error(error);
-        throw new DatabaseError(DATABASE_ERROR);
+        throw error;
       }
     },
   });
@@ -210,7 +212,7 @@ export const noteMutation = (t: any) => {
     ) => {
       try {
         if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHORIZED, {
+          return new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
 
@@ -218,14 +220,19 @@ export const noteMutation = (t: any) => {
         if (!context.session.userId)
           throw new AuthenticationError(UNKNOWN_SESSION);
 
-        const note = await context.prisma.note.delete({
+        const note = await context.prisma.note.findUnique({
+          where: { id },
+        });
+
+        if (!note)
+          return new BaseError(NOT_FOUND, 'Note not found', 404, true, { id });
+
+        await context.prisma.note.delete({
           where: {
             id,
           },
         });
 
-        if (!note)
-          return new BaseError(NOT_FOUND, 'Note not found', 404, true, { id });
         return note;
       } catch (error) {
         console.error('error loggin out', error);
@@ -250,9 +257,8 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        console.log('hi we got here');
         if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHORIZED, {
+          return new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
 
@@ -320,7 +326,7 @@ export const noteMutation = (t: any) => {
     ) => {
       try {
         if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHORIZED, {
+          return new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
 
@@ -331,11 +337,12 @@ export const noteMutation = (t: any) => {
         const selectedNote = await context.prisma.note.findUnique({
           where: { id },
         });
-        if (!selectedNote) 
+        if (!selectedNote)
           return new BaseError(NOT_FOUND, 'Note not found', 404, true, { id });
-        
+
         if (selectedNote.isDeleted && selectedNote.deletedAt)
           return selectedNote;
+        
         const updatedNote = await context.prisma.note.update({
           where: { id },
           data: {
