@@ -7,7 +7,8 @@ import express, { Application, Request, Response } from 'express';
 import session from 'express-session';
 import { Redis } from 'ioredis';
 
-import  rateLimit  from 'express-rate-limiter';
+import rateLimit from 'express-rate-limiter';
+import helmet from 'helmet';
 import morgan from 'morgan';
 import config from './config';
 import { getMyPrismaClient } from './db';
@@ -25,6 +26,7 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
+app.use(helmet);
 app.use(express.json());
 app.use(morgan('dev'));
 

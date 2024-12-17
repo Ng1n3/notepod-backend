@@ -28,6 +28,7 @@
     "express-session": "^1.18.0",
     "graphql": "^16.9.0",
     "graphql-iso-date": "^3.6.1",
+    "helmet": "^8.0.0",
     "ioredis": "^5.4.1",
     "lodash.merge": "^4.6.2",
     "morgan": "^1.10.0",
