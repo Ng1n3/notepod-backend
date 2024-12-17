@@ -1,4 +1,4 @@
-import merge from 'lodash.merge'
+import merge from 'lodash.merge';
 import { Config } from '../interfaces';
 import localConfig from './local';
 import prodConfig from './prod';

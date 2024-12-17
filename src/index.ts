@@ -7,17 +7,24 @@ import express, { Application, Request, Response } from 'express';
 import session from 'express-session';
 import { Redis } from 'ioredis';
 
+import  rateLimit  from 'express-rate-limiter';
+import morgan from 'morgan';
 import config from './config';
 import { getMyPrismaClient } from './db';
 import { getSchema } from './graphql/Schema';
 import { Mycontext } from './interfaces';
-// import { isProd } from './util';
-import morgan from 'morgan';
+import { isProd } from './util';
 
 dotenv.config();
 const app: Application = express();
 const RedisClient = new Redis();
 const PORT: string = process.env.PORT!;
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, //15minutes
+  max: 100, // limit each ip to 100 requests per windowMs
+});
+
+app.use(limiter);
 app.use(express.json());
 app.use(morgan('dev'));
 
@@ -31,8 +38,8 @@ app.use(
     cookie: {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24,
-      // secure: isProd(),
-      secure: false,
+      secure: isProd(),
+      // secure: false,
       sameSite: 'lax',
     },
   })

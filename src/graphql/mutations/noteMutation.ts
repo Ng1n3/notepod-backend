@@ -1,4 +1,5 @@
 import { Note } from '@prisma/client';
+import { GraphQLError } from 'graphql';
 import { booleanArg, stringArg } from 'nexus';
 import {
   ALREADY_TAKEN,
@@ -8,7 +9,7 @@ import {
   NOT_FOUND,
 } from '../../constants';
 import { Mycontext } from '../../interfaces';
-import { isAuthenticated } from '../../util';
+import { generateUniqueTitle, isAuthenticated } from '../../util';
 import { ZodNote } from '../validator/schema';
 
 export const noteMutation = (t: any) => {
@@ -31,7 +32,10 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
+        if (!isAuthenticated(context))
+          return new GraphQLError(NOT_AUTHORIZED, {
+            extensions: { code: NOT_AUTHORIZED },
+          });
 
         const validation = ZodNote.pick({
           title: true,
@@ -49,20 +53,19 @@ export const noteMutation = (t: any) => {
 
         if (!validation.success) throw new Error(INVALID_CREDENTIALS);
 
-        // const normalizedTitle = title.trim().toLowerCase();
-        const checkExistingNote = await context.prisma.note.findUnique({
-          where: { title },
-        });
-
-        if (checkExistingNote) throw new Error(ALREADY_TAKEN);
-
         const userId = context.session.userId;
         if (!context.session.userId)
           throw new Error('User Id is required to create a note');
 
+        const uniqueTitle = await generateUniqueTitle(
+          context.prisma,
+          title!,
+          userId!,
+          'note'
+        );
         const note = await context.prisma.note.create({
           data: {
-            title,
+            title: uniqueTitle,
             body,
             isDeleted: isDeleted ?? false,
             deletedAt: deletedAt ? new Date(deletedAt) : null,
