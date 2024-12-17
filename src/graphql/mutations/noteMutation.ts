@@ -200,6 +200,7 @@ export const noteMutation = (t: any) => {
       }
     },
   });
+
   t.field('deleteNote', {
     type: 'NoteType',
     args: {
@@ -240,6 +241,7 @@ export const noteMutation = (t: any) => {
       }
     },
   });
+
   t.field('restoreNote', {
     type: 'NoteType',
     args: {
@@ -314,6 +316,7 @@ export const noteMutation = (t: any) => {
       }
     },
   });
+  
   t.field('softDeleteNote', {
     type: 'NoteType',
     args: {
@@ -342,7 +345,7 @@ export const noteMutation = (t: any) => {
 
         if (selectedNote.isDeleted && selectedNote.deletedAt)
           return selectedNote;
-        
+
         const updatedNote = await context.prisma.note.update({
           where: { id },
           data: {
