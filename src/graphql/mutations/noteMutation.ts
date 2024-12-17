@@ -1,13 +1,19 @@
 import { Note } from '@prisma/client';
-import { GraphQLError } from 'graphql';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { AuthenticationError, ValidationError } from 'apollo-server-express';
 import { booleanArg, stringArg } from 'nexus';
 import {
   ALREADY_TAKEN,
+  DATABASE_ERROR,
   INVALID_CREDENTIALS,
   NOT_AUTHENTICATED,
   NOT_AUTHORIZED,
   NOT_FOUND,
+  UNKNOWN_SESSION,
 } from '../../constants';
+import { BaseError } from '../../errors/BaseError';
+import { ConflictError } from '../../errors/ConflictError';
+import { DatabaseError } from '../../errors/DatabaseError';
 import { Mycontext } from '../../interfaces';
 import { generateUniqueTitle, isAuthenticated } from '../../util';
 import { ZodNote } from '../validator/schema';
@@ -33,9 +39,13 @@ export const noteMutation = (t: any) => {
     ) => {
       try {
         if (!isAuthenticated(context))
-          return new GraphQLError(NOT_AUTHORIZED, {
-            extensions: { code: NOT_AUTHORIZED },
+          return new AuthenticationError(NOT_AUTHORIZED, {
+            userId: context.session?.id,
           });
+
+        const userId = context.session.userId;
+        if (!context.session.userId)
+          throw new AuthenticationError(UNKNOWN_SESSION);
 
         const validation = ZodNote.pick({
           title: true,
@@ -51,11 +61,11 @@ export const noteMutation = (t: any) => {
           userId: context.session.userId,
         });
 
-        if (!validation.success) throw new Error(INVALID_CREDENTIALS);
-
-        const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new Error('User Id is required to create a note');
+        if (!validation.success) {
+          throw new ValidationError(INVALID_CREDENTIALS, {
+            validationErrors: validation.error.errors,
+          });          
+        }
 
         const uniqueTitle = await generateUniqueTitle(
           context.prisma,
@@ -88,14 +98,23 @@ export const noteMutation = (t: any) => {
           },
         });
 
-        // console.log('backend note', note);
         return note;
-      } catch (error: any) {
-        console.error(error);
-        if (error.code === 'P2002') {
-          throw new Error(ALREADY_TAKEN); // Handle unique constraint violation
+      } catch (error) {
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === 'p2002'
+        ) {
+          throw new ConflictError(ALREADY_TAKEN, {
+            title,
+            userId: context.session.userId,
+          }); // Handle unique constraint violation
         }
-        throw error;
+
+        if (error instanceof BaseError) throw error;
+
+        throw new DatabaseError(DATABASE_ERROR, {
+          originalError: error instanceof Error ? error.message : String(error),
+        });
       }
     },
   });
