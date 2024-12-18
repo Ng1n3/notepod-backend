@@ -1,6 +1,4 @@
-import {
-  objectType,
-} from 'nexus';
+import { objectType } from 'nexus';
 import { UserType } from './UserTypes';
 
 export const NoteType = objectType({

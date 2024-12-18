@@ -9,7 +9,6 @@ import {
 import { Icursor, Mycontext } from '../interfaces';
 // import { GetAllUsers } from './types/GetAllUsers';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { AuthenticationError } from 'apollo-server-express';
 import { NOTFOUND } from 'dns';
 import { BaseError } from '../errors/BaseError';
 import { ValidationError } from '../errors/ValidationError';
@@ -18,6 +17,7 @@ import { NoteType } from './types/NoteTypes';
 import { PasswordType } from './types/PasswordTypes';
 import { TodoType } from './types/TodoTypes';
 import { UserType } from './types/UserTypes';
+import { AuthenticationError } from '../errors/AuthenticationError';
 
 export const Query = queryType({
   definition(t) {

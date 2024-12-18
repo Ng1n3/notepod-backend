@@ -1,6 +1,5 @@
 import { Todos } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { AuthenticationError } from 'apollo-server-express';
 import { booleanArg, stringArg } from 'nexus';
 import {
   ALREADY_TAKEN,
@@ -17,6 +16,7 @@ import { ValidationError } from '../../errors/ValidationError';
 import { Mycontext } from '../../interfaces';
 import { generateUniqueTitle, isAuthenticated } from '../../util';
 import { ZodTodo } from '../validator/schema';
+import { AuthenticationError } from '../../errors/AuthenticationError';
 
 export const todoMutation = (t: any) => {
   t.field('createTodo', {
@@ -379,7 +379,7 @@ export const todoMutation = (t: any) => {
 
         if (selectedTodo.isDeleted && selectedTodo.deletedAt)
           return selectedTodo;
-        
+
         const updatedTodos = await context.prisma.todos.update({
           where: { id },
           data: {

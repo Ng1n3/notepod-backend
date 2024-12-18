@@ -245,7 +245,7 @@ export const userMutation = (t: any) => {
     },
   });
 
-  t.fied('updateUser', {
+  t.field('updateUser', {
     args: {
       id: stringArg(),
       password: stringArg(),

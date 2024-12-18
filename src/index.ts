@@ -3,11 +3,11 @@ import { expressMiddleware } from '@apollo/server/express4';
 import RedisStore from 'connect-redis';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import express, { Application, Request, Response } from 'express';
+import express, { Application } from 'express';
 import session from 'express-session';
 import { Redis } from 'ioredis';
 
-import rateLimit from 'express-rate-limiter';
+import { rateLimit } from 'express-rate-limit';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import config from './config';
@@ -17,6 +17,11 @@ import { Mycontext } from './interfaces';
 import { isProd } from './util';
 
 dotenv.config();
+// declare module 'express-session' {
+//   export interface SessionData {
+//     userId: string;
+//   }
+// }
 const app: Application = express();
 const RedisClient = new Redis();
 const PORT: string = process.env.PORT!;
@@ -25,14 +30,19 @@ const limiter = rateLimit({
   max: 100, // limit each ip to 100 requests per windowMs
 });
 
-app.use(limiter);
-app.use(helmet);
+app.use(helmet());
 app.use(express.json());
 app.use(morgan('dev'));
+app.use('/graphql', limiter);
+
+let redisStore = new RedisStore({
+  client: RedisClient,
+  prefix: 'notepod:session',
+});
 
 app.use(
   session({
-    store: new RedisStore({ client: RedisClient }),
+    store: redisStore,
     secret: process.env.SESSION_SECRET!,
     name: 'notepod-api',
     resave: false,
@@ -41,10 +51,9 @@ app.use(
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24,
       secure: isProd(),
-      // secure: false,
       sameSite: 'lax',
     },
-  })
+  }) as any
 );
 
 const main = async () => {
@@ -64,13 +73,7 @@ const main = async () => {
     }),
     express.json(),
     expressMiddleware(server, {
-      context: async ({
-        req,
-        res,
-      }: {
-        req: Request;
-        res: Response;
-      }): Promise<Mycontext> => ({
+      context: async ({ req, res }): Promise<Mycontext> => ({
         req,
         res,
         prisma,

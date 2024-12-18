@@ -1,6 +1,5 @@
 import { Note } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { AuthenticationError } from 'apollo-server-express';
 import { booleanArg, stringArg } from 'nexus';
 import {
   ALREADY_TAKEN,
@@ -17,6 +16,7 @@ import { ValidationError } from '../../errors/ValidationError';
 import { Mycontext } from '../../interfaces';
 import { generateUniqueTitle, isAuthenticated } from '../../util';
 import { ZodNote } from '../validator/schema';
+import { AuthenticationError } from '../../errors/AuthenticationError';
 
 export const noteMutation = (t: any) => {
   t.field('createNote', {
@@ -316,7 +316,7 @@ export const noteMutation = (t: any) => {
       }
     },
   });
-  
+
   t.field('softDeleteNote', {
     type: 'NoteType',
     args: {
