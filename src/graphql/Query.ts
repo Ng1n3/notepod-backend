@@ -1,8 +1,18 @@
 import { booleanArg, intArg, list, nonNull, queryType, stringArg } from 'nexus';
 
-import { NOT_AUTHENTICATED, ROWS_LIMIT } from '../constants';
+import {
+  NOT_AUTHENTICATED,
+  NOT_FOUND,
+  ROWS_LIMIT,
+  UNKNOWN_SESSION,
+} from '../constants';
 import { Icursor, Mycontext } from '../interfaces';
 // import { GetAllUsers } from './types/GetAllUsers';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { AuthenticationError } from 'apollo-server-express';
+import { NOTFOUND } from 'dns';
+import { BaseError } from '../errors/BaseError';
+import { ValidationError } from '../errors/ValidationError';
 import { isAuthenticated } from '../util';
 import { NoteType } from './types/NoteTypes';
 import { PasswordType } from './types/PasswordTypes';
@@ -22,7 +32,18 @@ export const Query = queryType({
       },
       resolve: async (_, { cursor }: Icursor, context: Mycontext) => {
         try {
-          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context))
+            return new AuthenticationError(NOT_AUTHENTICATED, {
+              userId: context.session?.id,
+            });
+
+          // const userId = context.session.userId;
+          if (!context.session.userId)
+            throw new AuthenticationError(UNKNOWN_SESSION);
+
+          if (typeof cursor !== 'number' || cursor < 0) {
+            throw new ValidationError('Cursor must be a non-negative integer');
+          }
 
           const users = await context.prisma.user.findMany({
             take: ROWS_LIMIT,
@@ -40,12 +61,34 @@ export const Query = queryType({
             username: user.username,
             note: user.note,
           }));
-        } catch (error) {
+        } catch (error: any) {
           console.error(error);
-          return false;
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError:
+                  error instanceof Error ? error.message : String(error),
+              }
+            );
+          }
         }
       },
     });
+
     t.list.field('getNotes', {
       type: NoteType,
       args: {
@@ -58,7 +101,19 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context))
+            return new AuthenticationError(NOT_AUTHENTICATED, {
+              userId: context.session?.id,
+            });
+
+          // const userId = context.session.userId;
+          if (!context.session.userId)
+            throw new AuthenticationError(UNKNOWN_SESSION);
+
+          if (typeof cursor !== 'number' || cursor < 0) {
+            throw new ValidationError('Cursor must be a non-negative integer');
+          }
+
           const notes = await context.prisma.note.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
@@ -90,12 +145,34 @@ export const Query = queryType({
                 : note.updatedAt,
             user: note.user,
           }));
-        } catch (error) {
+        } catch (error: any) {
           console.error(error);
-          return false;
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError:
+                  error instanceof Error ? error.message : String(error),
+              }
+            );
+          }
         }
       },
     });
+
     t.list.field('getTodos', {
       type: TodoType,
       args: {
@@ -109,6 +186,23 @@ export const Query = queryType({
       ) => {
         try {
           if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          {
+            if (!isAuthenticated(context))
+              return new AuthenticationError(NOT_AUTHENTICATED, {
+                userId: context.session?.id,
+              });
+
+            // const userId = context.session.userId;
+            if (!context.session.userId)
+              throw new AuthenticationError(UNKNOWN_SESSION);
+
+            if (typeof cursor !== 'number' || cursor < 0) {
+              throw new ValidationError(
+                'Cursor must be a non-negative integer'
+              );
+            }
+          }
+
           const todos = await context.prisma.todos.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
@@ -144,12 +238,34 @@ export const Query = queryType({
             priority: todo.priority,
             user: todo.user,
           }));
-        } catch (error) {
+        } catch (error: any) {
           console.error(error);
-          return false;
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError:
+                  error instanceof Error ? error.message : String(error),
+              }
+            );
+          }
         }
       },
     });
+
     t.list.field('getPasswordFields', {
       type: PasswordType,
       args: {
@@ -162,7 +278,19 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context))
+            return new AuthenticationError(NOT_AUTHENTICATED, {
+              userId: context.session?.id,
+            });
+
+          // const userId = context.session.userId;
+          if (!context.session.userId)
+            throw new AuthenticationError(UNKNOWN_SESSION);
+
+          if (typeof cursor !== 'number' || cursor < 0) {
+            throw new ValidationError('Cursor must be a non-negative integer');
+          }
+
           const passwordFields = await context.prisma.password.findMany({
             take: ROWS_LIMIT,
             skip: cursor,
@@ -192,12 +320,34 @@ export const Query = queryType({
             deletedAt: field.deletedAt,
             user: field.user,
           }));
-        } catch (error) {
+        } catch (error: any) {
           console.error(error);
-          return false;
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError:
+                  error instanceof Error ? error.message : String(error),
+              }
+            );
+          }
         }
       },
     });
+
     t.field('getNote', {
       type: 'NoteType',
       args: {
@@ -209,7 +359,14 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context))
+            return new AuthenticationError(NOT_AUTHENTICATED, {
+              userId: context.session?.id,
+            });
+
+          // const userId = context.session.userId;
+          if (!context.session.userId)
+            throw new AuthenticationError(UNKNOWN_SESSION);
 
           const note = await context.prisma.note.findUnique({
             where: { id },
@@ -230,7 +387,7 @@ export const Query = queryType({
             },
           });
           if (!note) {
-            throw new Error(`Note with ID ${id} not found`);
+            throw new BaseError(NOTFOUND, `Note with ID ${id} not found`);
           }
           return {
             ...note,
@@ -241,10 +398,32 @@ export const Query = queryType({
           };
         } catch (error) {
           console.error('Error fetching note: ', error);
-          throw error;
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError:
+                  error instanceof Error ? error.message : String(error),
+              }
+            );
+          }
         }
       },
     });
+
     t.field('getTodo', {
       type: 'TodoType',
       args: {
@@ -256,7 +435,14 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context))
+            return new AuthenticationError(NOT_AUTHENTICATED, {
+              userId: context.session?.id,
+            });
+
+          // const userId = context.session.userId;
+          if (!context.session.userId)
+            throw new AuthenticationError(UNKNOWN_SESSION);
 
           const todo = await context.prisma.todos.findUnique({
             where: { id },
@@ -278,15 +464,37 @@ export const Query = queryType({
             },
           });
           if (!todo) {
-            throw new Error(`Todo with ID ${id} not found`);
+            throw new BaseError(NOTFOUND, `Todo with ID ${id} not found`);
           }
           return todo;
         } catch (error) {
           console.error('Error fetching todo: ', error);
-          throw error;
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError:
+                  error instanceof Error ? error.message : String(error),
+              }
+            );
+          }
         }
       },
     });
+
     t.field('getPasswordField', {
       type: 'PasswordType',
       args: {
@@ -298,7 +506,14 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context))
+            return new AuthenticationError(NOT_AUTHENTICATED, {
+              userId: context.session?.id,
+            });
+
+          // const userId = context.session.userId;
+          if (!context.session.userId)
+            throw new AuthenticationError(UNKNOWN_SESSION);
 
           const password = await context.prisma.password.findUnique({
             where: { id },
@@ -319,33 +534,81 @@ export const Query = queryType({
             },
           });
           if (!password) {
-            throw new Error(`Password with ID ${id} not found`);
+            throw new BaseError(NOT_FOUND, `Password with ID ${id} not found`);
           }
           return password;
         } catch (error) {
           console.error('Error fetching Passwordfields: ', error);
-          throw error;
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError:
+                  error instanceof Error ? error.message : String(error),
+              }
+            );
+          }
         }
       },
     });
+
     t.field('currentUser', {
       type: 'UserType',
       resolve: async (_: unknown, __: unknown, context: Mycontext) => {
         try {
-          if (!context.session.userId) return null;
-          return context.prisma.user.findUnique({
+          if (!context.session.userId)
+            throw new AuthenticationError(UNKNOWN_SESSION);
+
+          const user = await context.prisma.user.findUnique({
             where: { id: context.session.userId },
             select: { id: true, email: true, username: true },
           });
+
+          if (!user) {
+            throw new BaseError(NOTFOUND, 'No user found for current session');
+          }
+          return user;
         } catch (error) {
           console.error('Login error:', error);
-          if (error instanceof Error) {
-            throw new Error(error.message);
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError:
+                  error instanceof Error ? error.message : String(error),
+              }
+            );
           }
-          throw new Error('An unexpected error occurred during login');
         }
       },
     });
+
     t.list.field('searchNote', {
       type: 'NoteType',
       args: {
@@ -353,27 +616,53 @@ export const Query = queryType({
       },
       resolve: async (_: unknown, { searchTerm }, context: Mycontext) => {
         try {
-          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context))
+            return new AuthenticationError(NOT_AUTHENTICATED, {
+              userId: context.session?.id,
+            });
 
-          const notes = await context.prisma.note.findMany({
+          // const userId = context.session.userId;
+          if (!context.session.userId)
+            throw new AuthenticationError(UNKNOWN_SESSION);
+
+          const note = await context.prisma.note.findMany({
             where: {
               title: { contains: searchTerm, mode: 'insensitive' },
               userId: context.session.userId,
               // isDeleted: false
             },
           });
-          return notes;
+
+          if (!note) throw new BaseError(NOT_FOUND, 'No note found');
+          return note;
         } catch (error) {
           console.error('search error:', error);
-          if (error instanceof Error) {
-            throw new Error(error.message);
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError:
+                  error instanceof Error ? error.message : String(error),
+              }
+            );
           }
-          throw new Error(
-            `An unexpected error occcured when trying to searching for ${searchTerm}`
-          );
         }
       },
     });
+
     t.list.field('searchTodo', {
       type: 'TodoType',
       args: {
@@ -381,24 +670,48 @@ export const Query = queryType({
       },
       resolve: async (_: unknown, { searchTerm }, context: Mycontext) => {
         try {
-          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
+          if (!isAuthenticated(context))
+            return new AuthenticationError(NOT_AUTHENTICATED, {
+              userId: context.session?.id,
+            });
 
-          const todos = await context.prisma.todos.findMany({
+          // const userId = context.session.userId;
+          if (!context.session.userId)
+            throw new AuthenticationError(UNKNOWN_SESSION);
+
+          const todo = await context.prisma.todos.findMany({
             where: {
               title: { contains: searchTerm, mode: 'insensitive' },
               userId: context.session.userId,
               // isDeleted: false
             },
           });
-          return todos;
+          if (!todo) throw new BaseError(NOT_FOUND, 'Todo not found');
+          return todo;
         } catch (error) {
           console.error('search error:', error);
-          if (error instanceof Error) {
-            throw new Error(error.message);
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
+              'UnknownError',
+              'An unexpected error occurred',
+              500,
+              false,
+              {
+                originalError:
+                  error instanceof Error ? error.message : String(error),
+              }
+            );
           }
-          throw new Error(
-            `An unexpected error occcured when trying to searching for ${searchTerm}`
-          );
         }
       },
     });

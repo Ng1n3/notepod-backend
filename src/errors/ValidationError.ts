@@ -6,6 +6,6 @@ export class ValidationError extends BaseError {
     message: string = 'Validation failed',
     meta?: { validationErrors?: ZodIssue[] }
   ) {
-    super('ValidationError', message, 400, true, meta);
+    super('ValidationError', message, 400, true, meta || {});
   }
 }
