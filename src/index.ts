@@ -17,11 +17,7 @@ import { Mycontext } from './interfaces';
 import { isProd } from './util';
 
 dotenv.config();
-// declare module 'express-session' {
-//   export interface SessionData {
-//     userId: string;
-//   }
-// }
+
 const app: Application = express();
 const RedisClient = new Redis();
 const PORT: string = process.env.PORT!;
