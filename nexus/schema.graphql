@@ -13,11 +13,11 @@ type Mutation {
   createTodo(body: String, deletedAt: String, dueDate: String, isDeleted: Boolean, priority: String, title: String): TodoType
   createUser(email: String, password: String, username: String): UserType
   deleteNote(id: String): NoteType
-  deleteTodo(id: String): Boolean
-  deleteUser(id: String): Boolean
-  deletedPassword(id: String): Boolean
+  deleteTodo(id: String): TodoType
+  deleteUser(id: String): UserType
+  deletedPassword(id: String): PasswordType
   loginUser(email: String, password: String): UserType
-  logoutUser: Boolean
+  logoutUser: UserType
   restoreNote(deletedAt: String, id: String, isDeleted: Boolean): NoteType
   restorePassword(deletedAt: String, id: String, isDeleted: Boolean): PasswordType
   restoreTodo(deletedAt: String, id: String, isDeleted: Boolean): TodoType
@@ -27,7 +27,7 @@ type Mutation {
   updateNote(body: String, deletedAt: String, id: String, isDeleted: Boolean, title: String): NoteType
   updatePassword(deletedAt: String, email: String, fieldname: String, id: String, isDeleted: Boolean, password: String, username: String): PasswordType
   updateTodo(body: String, deletedAt: String, dueDate: String, id: String, isDeleted: Boolean, priority: String, title: String): TodoType
-  updateUser(id: String, password: String): Boolean
+  updateUser(id: String, password: String): UserType
 }
 
 type NoteType {

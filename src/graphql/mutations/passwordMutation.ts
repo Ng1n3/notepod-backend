@@ -251,6 +251,7 @@ export const passwordMutation = (t: any) => {
   });
 
   t.field('deletedPassword', {
+    type: 'PasswordType',
     args: {
       id: stringArg(),
     },

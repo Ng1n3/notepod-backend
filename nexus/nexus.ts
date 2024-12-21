@@ -111,11 +111,11 @@ export interface NexusGenFieldTypes {
     createTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
     createUser: NexusGenRootTypes['UserType'] | null; // UserType
     deleteNote: NexusGenRootTypes['NoteType'] | null; // NoteType
-    deleteTodo: boolean | null; // Boolean
-    deleteUser: boolean | null; // Boolean
-    deletedPassword: boolean | null; // Boolean
+    deleteTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
+    deleteUser: NexusGenRootTypes['UserType'] | null; // UserType
+    deletedPassword: NexusGenRootTypes['PasswordType'] | null; // PasswordType
     loginUser: NexusGenRootTypes['UserType'] | null; // UserType
-    logoutUser: boolean | null; // Boolean
+    logoutUser: NexusGenRootTypes['UserType'] | null; // UserType
     restoreNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     restorePassword: NexusGenRootTypes['PasswordType'] | null; // PasswordType
     restoreTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
@@ -125,7 +125,7 @@ export interface NexusGenFieldTypes {
     updateNote: NexusGenRootTypes['NoteType'] | null; // NoteType
     updatePassword: NexusGenRootTypes['PasswordType'] | null; // PasswordType
     updateTodo: NexusGenRootTypes['TodoType'] | null; // TodoType
-    updateUser: boolean | null; // Boolean
+    updateUser: NexusGenRootTypes['UserType'] | null; // UserType
   }
   NoteType: { // field return type
     body: string | null; // String
@@ -196,11 +196,11 @@ export interface NexusGenFieldTypeNames {
     createTodo: 'TodoType'
     createUser: 'UserType'
     deleteNote: 'NoteType'
-    deleteTodo: 'Boolean'
-    deleteUser: 'Boolean'
-    deletedPassword: 'Boolean'
+    deleteTodo: 'TodoType'
+    deleteUser: 'UserType'
+    deletedPassword: 'PasswordType'
     loginUser: 'UserType'
-    logoutUser: 'Boolean'
+    logoutUser: 'UserType'
     restoreNote: 'NoteType'
     restorePassword: 'PasswordType'
     restoreTodo: 'TodoType'
@@ -210,7 +210,7 @@ export interface NexusGenFieldTypeNames {
     updateNote: 'NoteType'
     updatePassword: 'PasswordType'
     updateTodo: 'TodoType'
-    updateUser: 'Boolean'
+    updateUser: 'UserType'
   }
   NoteType: { // field return type name
     body: 'String'

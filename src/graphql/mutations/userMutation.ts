@@ -160,6 +160,7 @@ export const userMutation = (t: any) => {
   });
 
   t.field('deleteUser', {
+    type: 'UserType',
     args: {
       id: stringArg(),
     },
@@ -193,6 +194,7 @@ export const userMutation = (t: any) => {
   });
 
   t.field('logoutUser', {
+    type: 'UserType',
     args: {},
     resolve: async (_: unknown, __: unknown, context: Mycontext) => {
       try {
@@ -246,6 +248,7 @@ export const userMutation = (t: any) => {
   });
 
   t.field('updateUser', {
+    type: 'UserType',
     args: {
       id: stringArg(),
       password: stringArg(),
