@@ -62,7 +62,7 @@ type Query {
   getPasswordFields(cursor: Int, isDeleted: Boolean): [PasswordType]
   getTodo(id: String!): TodoType
   getTodos(cursor: Int, isDeleted: Boolean): [TodoType]
-  getUsers(cursor: Int): [UserType]
+  getUsers(cursor: Int = 10, isDeleted: Boolean): [UserType]
   hello: String
   searchNote(searchTerm: String!): [NoteType]
   searchTodo(searchTerm: String!): [TodoType]

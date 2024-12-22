@@ -1,23 +1,23 @@
 import { booleanArg, intArg, list, nonNull, queryType, stringArg } from 'nexus';
 
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { NOTFOUND } from 'dns';
 import {
   NOT_AUTHENTICATED,
   NOT_FOUND,
   ROWS_LIMIT,
   UNKNOWN_SESSION,
 } from '../constants';
-import { Icursor, Mycontext } from '../interfaces';
-// import { GetAllUsers } from './types/GetAllUsers';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { NOTFOUND } from 'dns';
+import { AuthenticationError } from '../errors/AuthenticationError';
 import { BaseError } from '../errors/BaseError';
 import { ValidationError } from '../errors/ValidationError';
+import { Icursor, Mycontext } from '../interfaces';
 import { isAuthenticated } from '../util';
+import { logError, logger } from '../winston';
 import { NoteType } from './types/NoteTypes';
 import { PasswordType } from './types/PasswordTypes';
 import { TodoType } from './types/TodoTypes';
 import { UserType } from './types/UserTypes';
-import { AuthenticationError } from '../errors/AuthenticationError';
 
 export const Query = queryType({
   definition(t) {
@@ -28,21 +28,36 @@ export const Query = queryType({
     t.field('getUsers', {
       type: list(UserType),
       args: {
-        cursor: intArg(),
+        cursor: intArg({ default: 10 }),
+        isDeleted: booleanArg(),
       },
-      resolve: async (_, { cursor }: Icursor, context: Mycontext) => {
+      resolve: async (
+        _: unknown,
+        { cursor = 10 }: Icursor,
+        context: Mycontext
+      ) => {
         try {
-          if (!isAuthenticated(context))
-            return new AuthenticationError(NOT_AUTHENTICATED, {
+          if (!isAuthenticated(context)) {
+            const error = new AuthenticationError(NOT_AUTHENTICATED, {
               userId: context.session?.id,
             });
+            logError('getUsers', error, context);
+            return error;
+          }
 
           // const userId = context.session.userId;
-          if (!context.session.userId)
-            throw new AuthenticationError(UNKNOWN_SESSION);
+          if (!context.session.userId) {
+            const error = new AuthenticationError(UNKNOWN_SESSION);
+            logError('getUsers', error, context);
+            return error;
+          }
 
           if (typeof cursor !== 'number' || cursor < 0) {
-            throw new ValidationError('Cursor must be a non-negative integer');
+            const error = new ValidationError(
+              'Cursor must be a non-negative integer'
+            );
+            logError('getUsers', error, context);
+            return error;
           }
 
           const users = await context.prisma.user.findMany({
@@ -55,6 +70,13 @@ export const Query = queryType({
               note: true,
             },
           });
+
+          logger.info('Successfully fetched Users', {
+            resolver: 'getUsers',
+            count: users.length,
+            cursor,
+          });
+
           return users.map((user) => ({
             id: user.id,
             email: user.email,
@@ -62,7 +84,7 @@ export const Query = queryType({
             note: user.note,
           }));
         } catch (error: any) {
-          console.error(error);
+          logError('getUsers', error, context);
           if (error instanceof BaseError) {
             throw error;
           } else if (error instanceof PrismaClientKnownRequestError) {
