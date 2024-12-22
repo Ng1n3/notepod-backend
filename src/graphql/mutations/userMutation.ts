@@ -123,13 +123,13 @@ export const userMutation = (t: any) => {
 
         if (!validation.success) {
           validation.error.issues.map((issue) => {
-            console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
+            console.log(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
           throw new ValidationError(INVALID_CREDENTIALS, {
             validationErrors: validation.error.errors,
           });
         }
-
+        
         const user = await context.prisma.user.findUnique({
           where: {
             email: email.toLowerCase(),
@@ -141,11 +141,12 @@ export const userMutation = (t: any) => {
             password: true,
           },
         });
-
+        
         // console.log("user from backend", user);
         if (!user) throw new BaseError(NOT_FOUND, 'user not found', 404, true);
-
+        
         const isCorrect = await verifyPassword(password, user.password);
+        console.log("Is corect:", isCorrect);
         if (!isCorrect) return new AuthenticationError(INVALID_CREDENTIALS);
 
         context.session['userId'] = user.id;

@@ -1,0 +1,18 @@
+2024-12-22 09:56:28 info: Successfully fetched Users
+	Metadata: {
+  "resolver": "getUsers",
+  "count": 0,
+  "cursor": 10
+}
+2024-12-22 09:58:00 info: Successfully fetched Users
+	Metadata: {
+  "resolver": "getUsers",
+  "count": 0,
+  "cursor": 10
+}
+2024-12-22 10:00:29 info: Successfully fetched Users
+	Metadata: {
+  "resolver": "getUsers",
+  "count": 4,
+  "cursor": 0
+}

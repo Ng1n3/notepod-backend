@@ -28,7 +28,7 @@ export const Query = queryType({
     t.field('getUsers', {
       type: list(UserType),
       args: {
-        cursor: intArg({ default: 10 }),
+        cursor: intArg({ default: 0 }),
         isDeleted: booleanArg(),
       },
       resolve: async (
@@ -70,6 +70,8 @@ export const Query = queryType({
               note: true,
             },
           });
+
+          console.log("list of users: ", users);
 
           logger.info('Successfully fetched Users', {
             resolver: 'getUsers',

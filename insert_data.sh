@@ -11,20 +11,20 @@ echo "Tables truncated successfully"
 
 echo "Inserting new values into users..."
 #insert new values into the users table and return the userId
+echo "Inserting new values into users..."
 userIds=()
 while IFS= read -r line; do
   userIds+=("$line")
 done < <($PSQL "INSERT INTO users (id, username, email, password, \"createdAt\", \"updatedAt\")
 VALUES
-(uuid_generate_v4(), 'john_doe', 'john@example.com', 'hashedpassword123', NOW(), NOW()),
-(uuid_generate_v4(), 'jane_smith', 'jane@example.com', 'hashedpassword456', NOW(), NOW()),
-(uuid_generate_v4(), 'alex_brown', 'alex@example.com', 'hashedpassword789', NOW(), NOW()) RETURNING id;")
+(uuid_generate_v4(), 'john_doe', 'john@example.com', '\$argon2i\$v=19\$m=65536,t=3,p=4\$K5QhvRPrmKljU5RPL8EpLg\$RR6Q2tOnYTxakPHDoklXsOsYmvl+jzOmnTtOehmDwso', NOW(), NOW()),
+(uuid_generate_v4(), 'jane_smith', 'jane@example.com', '\$argon2i\$v=19\$m=65536,t=3,p=4\$BZJDf2Lj6PjCl6A9Aq5vtQ\$LD66XDUwa3+kGy1UvUHy6KGf2K5+dWyM4drwEmCbGH8', NOW(), NOW()),
+(uuid_generate_v4(), 'alex_brown', 'alex@example.com', '\$argon2i\$v=19\$m=65536,t=3,p=4\$6FPnD+NsK3FlmClp43pKJw\$hf2Ru8hEZ7ujWxH7A3jBp5hGM+fFyhwMTq5LoYZt8/o', NOW(), NOW()) RETURNING id;")
+
 
 userId1=${userIds[0]}
 userId2=${userIds[1]}
 userId3=${userIds[2]}
-
-echo "User IDs parsed: $userId1, $userId2, $userId3"
 
 echo "Inserting new values into todos..."
 $PSQL "INSERT INTO todos (id, title, body, \"isDeleted\", \"userId\", \"deletedAt\", \"createdAt\", \"updatedAt\", priority, \"dueDate\")

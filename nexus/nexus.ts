@@ -394,7 +394,7 @@ export interface NexusGenArgTypes {
       isDeleted?: boolean | null; // Boolean
     }
     getUsers: { // args
-      cursor: number | null; // Int
+      cursor?: number | null; // Int
       isDeleted?: boolean | null; // Boolean
     }
     searchNote: { // args
