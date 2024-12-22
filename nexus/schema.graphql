@@ -57,11 +57,11 @@ type PasswordType {
 type Query {
   currentUser: UserType
   getNote(id: String!): NoteType
-  getNotes(cursor: Int, isDeleted: Boolean): [NoteType]
+  getNotes(cursor: Int = 0, isDeleted: Boolean): [NoteType]
   getPasswordField(id: String!): PasswordType
   getPasswordFields(cursor: Int, isDeleted: Boolean): [PasswordType]
   getTodo(id: String!): TodoType
-  getTodos(cursor: Int, isDeleted: Boolean): [TodoType]
+  getTodos(cursor: Int = 0, isDeleted: Boolean): [TodoType]
   getUsers(cursor: Int = 0, isDeleted: Boolean): [UserType]
   hello: String
   searchNote(searchTerm: String!): [NoteType]

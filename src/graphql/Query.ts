@@ -1,7 +1,7 @@
-import { booleanArg, intArg, list, nonNull, queryType, stringArg } from 'nexus';
+import { booleanArg, intArg, nonNull, queryType, stringArg } from 'nexus';
 
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { NOTFOUND } from 'dns';
+import { error } from 'console';
 import {
   NOT_AUTHENTICATED,
   NOT_FOUND,
@@ -25,15 +25,15 @@ export const Query = queryType({
       type: 'String',
       resolve: () => 'Hello world',
     });
-    t.field('getUsers', {
-      type: list(UserType),
+    t.list.field('getUsers', {
+      type: UserType,
       args: {
         cursor: intArg({ default: 0 }),
         isDeleted: booleanArg(),
       },
       resolve: async (
         _: unknown,
-        { cursor = 10 }: Icursor,
+        { cursor = 0 }: Icursor,
         context: Mycontext
       ) => {
         try {
@@ -45,7 +45,6 @@ export const Query = queryType({
             return error;
           }
 
-          // const userId = context.session.userId;
           if (!context.session.userId) {
             const error = new AuthenticationError(UNKNOWN_SESSION);
             logError('getUsers', error, context);
@@ -70,8 +69,6 @@ export const Query = queryType({
               note: true,
             },
           });
-
-          console.log("list of users: ", users);
 
           logger.info('Successfully fetched Users', {
             resolver: 'getUsers',
@@ -116,25 +113,35 @@ export const Query = queryType({
     t.list.field('getNotes', {
       type: NoteType,
       args: {
-        cursor: intArg(),
+        cursor: intArg({ default: 0 }),
         isDeleted: booleanArg(),
       },
       resolve: async (
         _: unknown,
-        { cursor, isDeleted }: Icursor,
+        { cursor = 0, isDeleted }: Icursor,
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context))
-            return new AuthenticationError(NOT_AUTHENTICATED, {
+          if (!isAuthenticated(context)) {
+            const error = new AuthenticationError(NOT_AUTHENTICATED, {
               userId: context.session?.id,
             });
+            logError('getNotes', error, context);
+            return error;
+          }
 
-          if (!context.session.userId)
-            throw new AuthenticationError(UNKNOWN_SESSION);
+          if (!context.session.userId) {
+            const error = new AuthenticationError(UNKNOWN_SESSION);
+            logError('getNotes', error, context);
+            return error;
+          }
 
           if (typeof cursor !== 'number' || cursor < 0) {
-            throw new ValidationError('Cursor must be a non-negative integer');
+            const error = new ValidationError(
+              'Cursor must be a non-negative integer'
+            );
+            logError('getNotes', error, context);
+            return error;
           }
 
           const notes = await context.prisma.note.findMany({
@@ -155,6 +162,11 @@ export const Query = queryType({
             },
           });
 
+          logger.info('Successfully fetched Notes', {
+            resolver: 'getNotes',
+            count: notes.length,
+            cursor,
+          });
 
           return notes.map((note) => ({
             id: note.id,
@@ -199,7 +211,7 @@ export const Query = queryType({
     t.list.field('getTodos', {
       type: TodoType,
       args: {
-        cursor: intArg(),
+        cursor: intArg({ default: 0 }),
         isDeleted: booleanArg(),
       },
       resolve: async (
@@ -208,22 +220,26 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context)) return new Error(NOT_AUTHENTICATED);
-          {
-            if (!isAuthenticated(context))
-              return new AuthenticationError(NOT_AUTHENTICATED, {
-                userId: context.session?.id,
-              });
+          if (!isAuthenticated(context)) {
+            const error = new AuthenticationError(NOT_AUTHENTICATED, {
+              userId: context.session?.id,
+            });
+            logError('getTodos', error, context);
+            return error;
+          }
 
-            // const userId = context.session.userId;
-            if (!context.session.userId)
-              throw new AuthenticationError(UNKNOWN_SESSION);
+          if (!context.session.userId) {
+            const error = new AuthenticationError(UNKNOWN_SESSION);
+            logError('getTodos', error, context);
+            return error;
+          }
 
-            if (typeof cursor !== 'number' || cursor < 0) {
-              throw new ValidationError(
-                'Cursor must be a non-negative integer'
-              );
-            }
+          if (typeof cursor !== 'number' || cursor < 0) {
+            const error = new ValidationError(
+              'Cursor must be a non-negative integer'
+            );
+            logError('getTodos', error, context);
+            return error;
           }
 
           const todos = await context.prisma.todos.findMany({
@@ -249,6 +265,12 @@ export const Query = queryType({
                 },
               },
             },
+          });
+
+          logger.info('Successfully fetched Todos', {
+            resolver: 'getTodos',
+            count: todos.length,
+            cursor,
           });
 
           return todos.map((todo) => ({
@@ -301,17 +323,26 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context))
-            return new AuthenticationError(NOT_AUTHENTICATED, {
+          if (!isAuthenticated(context)) {
+            const error = new AuthenticationError(NOT_AUTHENTICATED, {
               userId: context.session?.id,
             });
+            logError('getPasswordFields', error, context);
+            return error;
+          }
 
-          // const userId = context.session.userId;
-          if (!context.session.userId)
-            throw new AuthenticationError(UNKNOWN_SESSION);
+          if (!context.session.userId) {
+            const error = new AuthenticationError(UNKNOWN_SESSION);
+            logError('getPasswordFields', error, context);
+            return error;
+          }
 
           if (typeof cursor !== 'number' || cursor < 0) {
-            throw new ValidationError('Cursor must be a non-negative integer');
+            const error = new ValidationError(
+              'Cursor must be a non-negative integer'
+            );
+            logError('getPasswordFields', error, context);
+            return error;
           }
 
           const passwordFields = await context.prisma.password.findMany({
@@ -331,6 +362,12 @@ export const Query = queryType({
               deletedAt: true,
               user: true,
             },
+          });
+
+          logger.info('Successfully fetched PasswordFields', {
+            resolver: 'getPasswordFields',
+            count: passwordFields.length,
+            cursor,
           });
 
           return passwordFields.map((field) => ({
@@ -372,7 +409,7 @@ export const Query = queryType({
     });
 
     t.field('getNote', {
-      type: 'NoteType',
+      type: NoteType,
       args: {
         id: nonNull(stringArg()),
       },
@@ -382,14 +419,19 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context))
-            return new AuthenticationError(NOT_AUTHENTICATED, {
+          if (!isAuthenticated(context)) {
+            const error = new AuthenticationError(NOT_AUTHENTICATED, {
               userId: context.session?.id,
             });
+            logError('getNote', error, context);
+            return error;
+          }
 
-          // const userId = context.session.userId;
-          if (!context.session.userId)
-            throw new AuthenticationError(UNKNOWN_SESSION);
+          if (!context.session.userId) {
+            const error = new AuthenticationError(UNKNOWN_SESSION);
+            logError('getNote', error, context);
+            return error;
+          }
 
           const note = await context.prisma.note.findUnique({
             where: { id },
@@ -409,9 +451,21 @@ export const Query = queryType({
               },
             },
           });
+
           if (!note) {
-            throw new BaseError(NOTFOUND, `Note with ID ${id} not found`);
+            const error = new BaseError(
+              NOT_FOUND,
+              `Note with ID ${id} not found`
+            );
+            logError('getNote', error, context);
+            return error;
           }
+
+          logger.info('Successfully fetched Note', {
+            resolver: 'getNote',
+            noteId: note.id,
+          });
+
           return {
             ...note,
             updatedAt:
@@ -448,7 +502,7 @@ export const Query = queryType({
     });
 
     t.field('getTodo', {
-      type: 'TodoType',
+      type: TodoType,
       args: {
         id: nonNull(stringArg()),
       },
@@ -458,14 +512,19 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context))
-            return new AuthenticationError(NOT_AUTHENTICATED, {
+          if (!isAuthenticated(context)) {
+            const error = new AuthenticationError(NOT_AUTHENTICATED, {
               userId: context.session?.id,
             });
+            logError('getTodo', error, context);
+            return error;
+          }
 
-          // const userId = context.session.userId;
-          if (!context.session.userId)
-            throw new AuthenticationError(UNKNOWN_SESSION);
+          if (!context.session.userId) {
+            const error = new AuthenticationError(UNKNOWN_SESSION);
+            logError('getTodo', error, context);
+            return error;
+          }
 
           const todo = await context.prisma.todos.findUnique({
             where: { id },
@@ -487,8 +546,18 @@ export const Query = queryType({
             },
           });
           if (!todo) {
-            throw new BaseError(NOTFOUND, `Todo with ID ${id} not found`);
+            const error = new BaseError(
+              NOT_FOUND,
+              `Todo with ID ${id} not found`
+            );
+            logError('getTodo', error, context);
+            return error;
           }
+          logger.info('Successfully fetched Todo', {
+            resolver: 'getTodo',
+            todoId: todo.id,
+          });
+
           return todo;
         } catch (error) {
           console.error('Error fetching todo: ', error);
@@ -519,7 +588,7 @@ export const Query = queryType({
     });
 
     t.field('getPasswordField', {
-      type: 'PasswordType',
+      type: PasswordType,
       args: {
         id: nonNull(stringArg()),
       },
@@ -529,14 +598,19 @@ export const Query = queryType({
         context: Mycontext
       ) => {
         try {
-          if (!isAuthenticated(context))
-            return new AuthenticationError(NOT_AUTHENTICATED, {
+          if (!isAuthenticated(context)) {
+            const error = new AuthenticationError(NOT_AUTHENTICATED, {
               userId: context.session?.id,
             });
+            logError('getPasswordField', error, context);
+            return error;
+          }
 
-          // const userId = context.session.userId;
-          if (!context.session.userId)
-            throw new AuthenticationError(UNKNOWN_SESSION);
+          if (!context.session.userId) {
+            const error = new AuthenticationError(UNKNOWN_SESSION);
+            logError('getPasswordField', error, context);
+            return error;
+          }
 
           const password = await context.prisma.password.findUnique({
             where: { id },
@@ -557,8 +631,20 @@ export const Query = queryType({
             },
           });
           if (!password) {
-            throw new BaseError(NOT_FOUND, `Password with ID ${id} not found`);
+            const error = new BaseError(
+              NOT_FOUND,
+              `Password with ID ${id} not 
+              found`
+            );
+            logError('getPasswordField', error, context);
+            return error;
           }
+
+          logger.info('Successfully fetched PasswordField', {
+            resolver: 'getPasswordField',
+            passwordId: password.id,
+          });
+
           return password;
         } catch (error) {
           console.error('Error fetching Passwordfields: ', error);
@@ -589,11 +675,14 @@ export const Query = queryType({
     });
 
     t.field('currentUser', {
-      type: 'UserType',
+      type: UserType,
       resolve: async (_: unknown, __: unknown, context: Mycontext) => {
         try {
-          if (!context.session.userId)
-            throw new AuthenticationError(UNKNOWN_SESSION);
+          if (!context.session.userId) {
+            const error = new AuthenticationError(UNKNOWN_SESSION);
+            logError('currentUser', error, context);
+            return error;
+          }
 
           const user = await context.prisma.user.findUnique({
             where: { id: context.session.userId },
@@ -601,8 +690,18 @@ export const Query = queryType({
           });
 
           if (!user) {
-            throw new BaseError(NOTFOUND, 'No user found for current session');
+            const eror = new BaseError(
+              NOT_FOUND,
+              'No user found for current session'
+            );
+            logError('currentUser', eror, context);
+            return error;
           }
+
+          logger.info('Successfully fetched current user', {
+            resolver: 'currentUser',
+            userId: user.id,
+          });
           return user;
         } catch (error) {
           console.error('Login error:', error);
@@ -639,14 +738,19 @@ export const Query = queryType({
       },
       resolve: async (_: unknown, { searchTerm }, context: Mycontext) => {
         try {
-          if (!isAuthenticated(context))
-            return new AuthenticationError(NOT_AUTHENTICATED, {
+          if (!isAuthenticated(context)) {
+            const error = new AuthenticationError(NOT_AUTHENTICATED, {
               userId: context.session?.id,
             });
+            logError('serachNote', error, context);
+            return error;
+          }
 
-          // const userId = context.session.userId;
-          if (!context.session.userId)
-            throw new AuthenticationError(UNKNOWN_SESSION);
+          if (!context.session.userId) {
+            const error = new AuthenticationError(UNKNOWN_SESSION);
+            logError('serachNote', error, context);
+            return error;
+          }
 
           const note = await context.prisma.note.findMany({
             where: {
@@ -656,7 +760,17 @@ export const Query = queryType({
             },
           });
 
-          if (!note) throw new BaseError(NOT_FOUND, 'No note found');
+          if (note.length === 0) {
+            const note = new BaseError(NOT_FOUND, 'No note found');
+            logError('searchNote', note, context);
+            return note;
+          }
+
+          logger.info('Successfully fetched Note', {
+            resolver: 'searchNote',
+            noteId: note.length,
+          });
+
           return note;
         } catch (error) {
           console.error('search error:', error);
@@ -687,20 +801,25 @@ export const Query = queryType({
     });
 
     t.list.field('searchTodo', {
-      type: 'TodoType',
+      type: TodoType,
       args: {
         searchTerm: nonNull(stringArg()),
       },
       resolve: async (_: unknown, { searchTerm }, context: Mycontext) => {
         try {
-          if (!isAuthenticated(context))
-            return new AuthenticationError(NOT_AUTHENTICATED, {
+          if (!isAuthenticated(context)) {
+            const error = new AuthenticationError(NOT_AUTHENTICATED, {
               userId: context.session?.id,
             });
+            logError('searchTodo', error, context);
+            return error;
+          }
 
-          // const userId = context.session.userId;
-          if (!context.session.userId)
-            throw new AuthenticationError(UNKNOWN_SESSION);
+          if (!context.session.userId) {
+            const error = new AuthenticationError(UNKNOWN_SESSION);
+            logError('searchTodo', error, context);
+            return error;
+          }
 
           const todo = await context.prisma.todos.findMany({
             where: {
@@ -709,7 +828,18 @@ export const Query = queryType({
               // isDeleted: false
             },
           });
-          if (!todo) throw new BaseError(NOT_FOUND, 'Todo not found');
+
+          if (todo.length === 0) {
+            const error = new BaseError(NOT_FOUND, 'Todo not found');
+            logError('searchTodo', error, context);
+            return error;
+          }
+
+          logger.info('Successfully fetched Todo', {
+            resolver: 'searchTodo',
+            todoId: todo.length,
+          });
+
           return todo;
         } catch (error) {
           console.error('search error:', error);
