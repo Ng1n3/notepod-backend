@@ -2,7 +2,9 @@ import { User } from '@prisma/client';
 import { stringArg } from 'nexus';
 
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { log } from 'console';
 import {
+  ALREADY_AUTHENTICATED,
   INVALID_CREDENTIALS,
   NOT_AUTHENTICATED,
   NOT_FOUND,
@@ -15,8 +17,8 @@ import { ValidationError } from '../../errors/ValidationError';
 import { Mycontext } from '../../interfaces';
 import { hashPassword, isAuthenticated, verifyPassword } from '../../util';
 import { logError, logger } from '../../winston';
-import { ZodUpdateUser, ZodUser } from '../validator/schema';
 import { UserType } from '../types/UserTypes';
+import { ZodUpdateUser, ZodUser } from '../validator/schema';
 
 export const userMutation = (t: any) => {
   t.field('createUser', {
@@ -36,7 +38,11 @@ export const userMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        // if (isAuthenticated(context)) return new Error(NOT_AUTHORIZED);
+        if (isAuthenticated(context)) {
+          const error = new AuthenticationError(ALREADY_AUTHENTICATED);
+          logError('createUser', error, context);
+          return error;
+        }
 
         const validation = ZodUser.pick({
           username: true,
@@ -139,6 +145,11 @@ export const userMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
+        if (isAuthenticated(context)) {
+          const error = new AuthenticationError(ALREADY_AUTHENTICATED);
+          logError('createUser', error, context);
+          return error;
+        }
 
         const validation = ZodUser.pick({
           email: true,
@@ -152,9 +163,11 @@ export const userMutation = (t: any) => {
           validation.error.issues.map((issue) => {
             console.log(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
-          throw new ValidationError(INVALID_CREDENTIALS, {
+          const error = new ValidationError(INVALID_CREDENTIALS, {
             validationErrors: validation.error.errors,
           });
+          logError('loginUser', error, context);
+          return error;
         }
 
         const user = await context.prisma.user.findUnique({
@@ -169,20 +182,55 @@ export const userMutation = (t: any) => {
           },
         });
 
-        // console.log("user from backend", user);
-        if (!user) throw new BaseError(NOT_FOUND, 'user not found', 404, true);
+        if (!user) {
+          const error = new BaseError(NOT_FOUND, 'user not found', 404, true);
+          logError('loginUser', error, context);
+          return error;
+        }
 
         const isCorrect = await verifyPassword(password, user.password);
         console.log('Is corect:', isCorrect);
-        if (!isCorrect) return new AuthenticationError(INVALID_CREDENTIALS);
+        if (!isCorrect) {
+          const error = new AuthenticationError(INVALID_CREDENTIALS);
+          logError('loginUser', error, context);
+          return error;
+        }
 
         context.session['userId'] = user.id;
-        // console.log("Session after login", context.session);
+
+        logger.info('User logged in successfully', {
+          resolver: 'loginUser',
+          userId: user.id,
+          email: user.email,
+        });
+
         context.session.save();
         const { password: _, ...userWithoutPassword } = user;
         return userWithoutPassword;
-      } catch (error) {
-        throw error;
+      } catch (error: any) {
+        logError('loginUser', error, context);
+        if (error instanceof BaseError) {
+          throw error;
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError(
+            'DatabaseError',
+            'A database error occurred',
+            500,
+            true,
+            { originalError: error.message }
+          );
+        } else {
+          throw new BaseError(
+            'UnknownError',
+            'An unexpected error occurred',
+            500,
+            false,
+            {
+              originalError:
+                error instanceof Error ? error.message : String(error),
+            }
+          );
+        }
       }
     },
   });

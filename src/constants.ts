@@ -9,3 +9,4 @@ export const DUPLICATE_ERROR = 'This already exists, try something new';
 export const MAX_TITLE_ATTEMPT = 30;
 export const UNKNOWN_SESSION = 'User session is not found';
 export const DATABASE_ERROR = 'Unexpected error in database transaction';
+export const ALREADY_AUTHENTICATED = 'Already Authenticated';
