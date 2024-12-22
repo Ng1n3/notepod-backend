@@ -21,6 +21,11 @@ const logFormat = printf(({ level, message, timestamp, ...metadata }) => {
   return `${timestamp} ${level}: ${message}${meta}`;
 });
 
+const excludeError = format((info) => {
+  if (info.level === 'error') return false;
+  return info;
+});
+
 // Create the logger
 export const logger = createLogger({
   format: combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), logFormat),
@@ -40,7 +45,7 @@ export const logger = createLogger({
       maxsize: 5242880, // 5MB in bytes
       maxFiles: 5, // Keep up to 5 rotated files
       tailable: true, // The newest will always be the one being written to
-      // format: combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), logFormat),
+      format: combine(excludeError(), winston.format.json()),
     }),
 
     new transports.File({
@@ -49,6 +54,7 @@ export const logger = createLogger({
       maxFiles: 5,
       maxsize: 5242880,
       tailable: true,
+      format: winston.format.json(),
     }),
   ],
 });

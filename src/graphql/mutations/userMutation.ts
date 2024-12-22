@@ -206,10 +206,6 @@ export const userMutation = (t: any) => {
 
         if (!context.session.userId)
           throw new AuthenticationError(UNKNOWN_SESSION);
-        // const userId = context.session.userId;
-        // context.session.destroy((err) => {
-        //   console.error('Error destroying Session', err);
-        // });
 
         return new Promise((resolve, reject) => {
           context.session.destroy((err) => {
