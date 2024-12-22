@@ -2,7 +2,7 @@ import { User } from '@prisma/client';
 import { stringArg } from 'nexus';
 
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { log } from 'console';
+import { error, log } from 'console';
 import {
   ALREADY_AUTHENTICATED,
   INVALID_CREDENTIALS,
@@ -349,29 +349,29 @@ export const userMutation = (t: any) => {
         return logout;
       } catch (error: any) {
         logError('logoutUser', error, context);
-          if (error instanceof BaseError) {
-            throw error;
-          } else if (error instanceof PrismaClientKnownRequestError) {
-            throw new BaseError(
-              'DatabaseError',
-              'A database error occurred',
-              500,
-              true,
-              { originalError: error.message }
-            );
-          } else {
-            throw new BaseError(
-              'UnknownError',
-              'An unexpected error occurred',
-              500,
-              false,
-              {
-                originalError:
-                  error instanceof Error ? error.message : String(error),
-              }
-            );
-          }
+        if (error instanceof BaseError) {
+          throw error;
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError(
+            'DatabaseError',
+            'A database error occurred',
+            500,
+            true,
+            { originalError: error.message }
+          );
+        } else {
+          throw new BaseError(
+            'UnknownError',
+            'An unexpected error occurred',
+            500,
+            false,
+            {
+              originalError:
+                error instanceof Error ? error.message : String(error),
+            }
+          );
         }
+      }
     },
   });
 
@@ -407,19 +407,30 @@ export const userMutation = (t: any) => {
 
         if (!validation.success) {
           validation.error.issues.map((issue) => {
-            console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
+            console.log(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
-          throw new ValidationError(INVALID_CREDENTIALS, {
+          const error = new ValidationError(INVALID_CREDENTIALS, {
             validationErrors: validation.error.errors,
           });
+          logError('loginUser', error, context);
+          return error;
         }
+
         const existingUser = await context.prisma.user.findUnique({
           where: { id },
         });
         if (!existingUser) {
-          throw new BaseError('NotFoundError', 'User not found', 404, true, {
-            userId: id,
-          });
+          const error = new BaseError(
+            'NotFoundError',
+            'User not found',
+            404,
+            true,
+            {
+              userId: id,
+            }
+          );
+          logError('updateUser', error, context);
+          return error;
         }
 
         const hashedPassword = await hashPassword(password);
@@ -436,23 +447,40 @@ export const userMutation = (t: any) => {
           },
         });
 
+        logger.info('User updated successfully', {
+          resolver: 'updateUser',
+          userId: updatedUser.id,
+          email: updatedUser.email,
+        });
+
         return {
           message: 'User updated successfully',
           user: updatedUser,
         };
       } catch (error: any) {
-        console.error(error);
-        throw error instanceof BaseError
-          ? error
-          : new BaseError(
-              'UnknownError',
-              'An unexpected error occurred',
-              500,
-              false,
-              {
-                originalError: error.message,
-              }
-            );
+        logError('getUsers', error, context);
+        if (error instanceof BaseError) {
+          throw error;
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError(
+            'DatabaseError',
+            'A database error occurred',
+            500,
+            true,
+            { originalError: error.message }
+          );
+        } else {
+          throw new BaseError(
+            'UnknownError',
+            'An unexpected error occurred',
+            500,
+            false,
+            {
+              originalError:
+                error instanceof Error ? error.message : String(error),
+            }
+          );
+        }
       }
     },
   });
