@@ -236,7 +236,7 @@ export const userMutation = (t: any) => {
   });
 
   t.field('deleteUser', {
-    type: 'UserType',
+    type: UserType,
     args: {
       id: stringArg(),
     },
@@ -246,43 +246,81 @@ export const userMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
+          logError('deleteUser', error, context);
+          return error;
+        }
 
-        // const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+        if (!context.session.userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('deleteUser', error, context);
+          return error;
+        }
 
         const user = await context.prisma.user.delete({
           where: {
             id: userDetail.id,
           },
         });
-        if (!user) throw new BaseError(NOT_FOUND, 'user not found', 404, true);
+
+        if (!user) {
+          const error = new BaseError(NOT_FOUND, 'user not found', 404, true);
+          logError('deleteUser', error, context);
+          return error;
+        }
         return user;
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        throw error;
+        logError('deleteUser', error, context);
+        if (error instanceof BaseError) {
+          throw error;
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError(
+            'DatabaseError',
+            'A database error occurred',
+            500,
+            true,
+            { originalError: error.message }
+          );
+        } else {
+          throw new BaseError(
+            'UnknownError',
+            'An unexpected error occurred',
+            500,
+            false,
+            {
+              originalError:
+                error instanceof Error ? error.message : String(error),
+            }
+          );
+        }
       }
     },
   });
 
   t.field('logoutUser', {
-    type: 'UserType',
+    type: UserType,
     args: {},
     resolve: async (_: unknown, __: unknown, context: Mycontext) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
+          logError('logoutUser', error, context);
+          return error;
+        }
 
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+        if (!context.session.userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('logoutUser', error, context);
+          return error;
+        }
 
-        return new Promise((resolve, reject) => {
+        const logout = new Promise((resolve, reject) => {
           context.session.destroy((err) => {
             if (err) {
               console.error('Error destroying session:', err);
@@ -302,20 +340,38 @@ export const userMutation = (t: any) => {
             }
           });
         });
+
+        logger.info('User logged out successfully', {
+          resolver: 'logoutUser',
+          userId: context.session.userId,
+        });
+
+        return logout;
       } catch (error: any) {
-        console.error('Error loggin gout', error);
-        throw error instanceof BaseError
-          ? error
-          : new BaseError(
+        logError('logoutUser', error, context);
+          if (error instanceof BaseError) {
+            throw error;
+          } else if (error instanceof PrismaClientKnownRequestError) {
+            throw new BaseError(
+              'DatabaseError',
+              'A database error occurred',
+              500,
+              true,
+              { originalError: error.message }
+            );
+          } else {
+            throw new BaseError(
               'UnknownError',
               'An unexpected error occurred',
               500,
               false,
               {
-                originalError: error.message,
+                originalError:
+                  error instanceof Error ? error.message : String(error),
               }
             );
-      }
+          }
+        }
     },
   });
 
@@ -331,14 +387,19 @@ export const userMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
+          logError('logoutUser', error, context);
+          return error;
+        }
 
-        // const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+        if (!context.session.userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('logoutUser', error, context);
+          return error;
+        }
 
         const validation = ZodUpdateUser.pick({
           password: true,
