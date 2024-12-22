@@ -9,18 +9,20 @@ import {
   NOT_FOUND,
   UNKNOWN_SESSION,
 } from '../../constants';
+import { AuthenticationError } from '../../errors/AuthenticationError';
 import { BaseError } from '../../errors/BaseError';
 import { ConflictError } from '../../errors/ConflictError';
 import { DatabaseError } from '../../errors/DatabaseError';
 import { ValidationError } from '../../errors/ValidationError';
 import { Mycontext } from '../../interfaces';
 import { generateUniqueTitle, isAuthenticated } from '../../util';
+import { logError } from '../../winston';
+import { TodoType } from '../types/TodoTypes';
 import { ZodTodo } from '../validator/schema';
-import { AuthenticationError } from '../../errors/AuthenticationError';
 
 export const todoMutation = (t: any) => {
   t.field('createTodo', {
-    type: 'TodoType',
+    type: TodoType,
     args: {
       title: stringArg(),
       body: stringArg(),
@@ -46,14 +48,20 @@ export const todoMutation = (t: any) => {
     ) => {
       try {
         // console.log('PING!!!');
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
+          logError('createTodo', error, context);
+          return error;
+        }
 
         const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+        if (!context.session.userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('createTodo', error, context);
+          return error;
+        }
 
         const validation = ZodTodo.pick({
           title: true,
@@ -77,9 +85,11 @@ export const todoMutation = (t: any) => {
           validation.error.issues.map((issue) => {
             console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
-          throw new ValidationError(INVALID_CREDENTIALS, {
+          const error = new ValidationError(INVALID_CREDENTIALS, {
             validationErrors: validation.error.errors,
           });
+          logError('createTodo', error, context);
+          return error;
         }
 
         const uniqueTitle = await generateUniqueTitle(
@@ -114,24 +124,25 @@ export const todoMutation = (t: any) => {
             },
           },
         });
-        // console.log('backend todo', todo);
+
         return todo;
-      } catch (error) {
-        if (
-          error instanceof PrismaClientKnownRequestError &&
-          error.code === 'p2002'
-        ) {
-          throw new ConflictError(ALREADY_TAKEN, {
-            title,
-            userId: context.session.userId,
-          }); // Handle unique constraint violation
+      } catch (error: any) {
+        logError('createTodo', error, context);
+        if (error instanceof BaseError) {
+          throw error; // Re-throw the specific error
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError('DATABASE_ERROR', error.message, 500, true, {
+            originalError: error.message,
+          });
+        } else {
+          throw new BaseError(
+            'UNKNOWN_ERROR',
+            'An unexpected error occurred',
+            500,
+            false,
+            { originalError: error.message }
+          );
         }
-
-        if (error instanceof BaseError) throw error;
-
-        throw new DatabaseError(DATABASE_ERROR, {
-          originalError: error instanceof Error ? error.message : String(error),
-        });
       }
     },
   });

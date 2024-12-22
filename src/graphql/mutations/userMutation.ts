@@ -2,7 +2,6 @@ import { User } from '@prisma/client';
 import { stringArg } from 'nexus';
 
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { error, log } from 'console';
 import {
   ALREADY_AUTHENTICATED,
   INVALID_CREDENTIALS,
