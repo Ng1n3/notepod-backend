@@ -289,27 +289,57 @@ export const todoMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
+          logError('deleteTodo', error, context);
+          return error;
+        }
 
-        // const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+        const userId = context.session.userId;
+        if (!userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('deleteTodo', error, context);
+          return error;
+        }
 
         const todo = await context.prisma.todos.findUnique({ where: { id } });
 
-        if (!todo)
-          return new BaseError(NOT_FOUND, 'Todo not found', 404, true, { id });
+        if (!todo) {
+          const error = new BaseError(NOT_FOUND, 'Todo not found', 404, true, {
+            id,
+          });
+          logError('deleteTodo', error, context);
+          return error;
+        }
 
         await context.prisma.todos.delete({
           where: { id },
         });
+
+        logger.info('Todo deleted successfully', {
+          id: todo.id,
+          title: todo.title,
+        });
         return todo;
-      } catch (error) {
-        console.error(error);
-        throw error;
+      } catch (error: any) {
+        logError('deleteTodo', error, context);
+        if (error instanceof BaseError) {
+          throw error; // Re-throw the specific error
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError('DATABASE_ERROR', error.message, 500, true, {
+            originalError: error.message,
+          });
+        } else {
+          throw new BaseError(
+            'UNKNOWN_ERROR',
+            'An unexpected error occurred',
+            500,
+            false,
+            { originalError: error.message }
+          );
+        }
       }
     },
   });
@@ -331,14 +361,20 @@ export const todoMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
+          logError('deleteTodo', error, context);
+          return error;
+        }
 
-        // const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+        const userId = context.session.userId;
+        if (!userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('deleteTodo', error, context);
+          return error;
+        }
 
         const validation = ZodTodo.pick({
           isDeleted: true,
@@ -350,16 +386,23 @@ export const todoMutation = (t: any) => {
           validation.error.issues.map((issue) => {
             console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
-          throw new ValidationError(INVALID_CREDENTIALS, {
+          const error = new ValidationError(INVALID_CREDENTIALS, {
             validationErrors: validation.error.errors,
           });
+          logError('updateTodo', error, context);
+          return error;
         }
 
         const selectedTodo = await context.prisma.todos.findUnique({
           where: { id },
         });
-        if (!selectedTodo)
-          throw new BaseError(NOT_FOUND, 'Todo not found', 404, true, { id });
+        if (!selectedTodo) {
+          const error = new BaseError(NOT_FOUND, 'Todo not found', 404, true, {
+            id,
+          });
+          logError('restoreTodo', error, context);
+          return error;
+        }
 
         if (selectedTodo.isDeleted === false && selectedTodo.deletedAt) return;
         const updatedTodo = await context.prisma.todos.update({
@@ -385,10 +428,29 @@ export const todoMutation = (t: any) => {
             },
           },
         });
+
+        logger.info('Todo restored successfully', {
+          id: updatedTodo.id,
+          title: updatedTodo.title,
+        });
         return updatedTodo;
-      } catch (error) {
-        console.error('error restoring note', error);
-        throw error;
+      } catch (error: any) {
+        logError('createUser', error, context);
+        if (error instanceof BaseError) {
+          throw error; // Re-throw the specific error
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError('DATABASE_ERROR', error.message, 500, true, {
+            originalError: error.message,
+          });
+        } else {
+          throw new BaseError(
+            'UNKNOWN_ERROR',
+            'An unexpected error occurred',
+            500,
+            false,
+            { originalError: error.message }
+          );
+        }
       }
     },
   });
