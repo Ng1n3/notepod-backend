@@ -130,7 +130,6 @@ export const Query = queryType({
               userId: context.session?.id,
             });
 
-          // const userId = context.session.userId;
           if (!context.session.userId)
             throw new AuthenticationError(UNKNOWN_SESSION);
 
@@ -155,7 +154,7 @@ export const Query = queryType({
               user: true,
             },
           });
-          // console.log("RAW notes from database", notes);
+
 
           return notes.map((note) => ({
             id: note.id,
