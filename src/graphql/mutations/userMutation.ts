@@ -1,10 +1,10 @@
 import { User } from '@prisma/client';
 import { stringArg } from 'nexus';
 
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import {
   INVALID_CREDENTIALS,
   NOT_AUTHENTICATED,
-  NOT_AUTHORIZED,
   NOT_FOUND,
   UNKNOWN_SESSION,
 } from '../../constants';
@@ -14,11 +14,13 @@ import { ConflictError } from '../../errors/ConflictError';
 import { ValidationError } from '../../errors/ValidationError';
 import { Mycontext } from '../../interfaces';
 import { hashPassword, isAuthenticated, verifyPassword } from '../../util';
+import { logError, logger } from '../../winston';
 import { ZodUpdateUser, ZodUser } from '../validator/schema';
+import { UserType } from '../types/UserTypes';
 
 export const userMutation = (t: any) => {
   t.field('createUser', {
-    type: 'UserType',
+    type: UserType,
     args: {
       username: stringArg(),
       email: stringArg(),
@@ -48,15 +50,24 @@ export const userMutation = (t: any) => {
 
         if (!validation.success) {
           const firstIssue = validation.error.issues[0];
+          let error;
           switch (firstIssue.path[0]) {
             case 'email':
-              throw new ValidationError('INVALID_EMAIL');
+              error = new ValidationError('INVALID_EMAIL');
+              logError('createUser', error, context);
+              return error;
             case 'password':
-              throw new ValidationError('WEAK_PASSWORD');
+              error = new ValidationError('WEAK_PASSWORD');
+              logError('createUser', error, context);
+              return error;
             case 'username':
-              throw new ValidationError('INVALID_USERNAME');
+              error = new ValidationError('INVALID_USERNAME');
+              logError('createUser', error, context);
+              return error;
             default:
-              throw new ValidationError('INVALID_INPUT');
+              error = new ValidationError('INVALID_INPUT');
+              logError('createUser', error, context);
+              return error;
           }
         }
 
@@ -71,10 +82,14 @@ export const userMutation = (t: any) => {
 
         if (existingUser) {
           if (existingUser.email === email.toLowerCase()) {
-            throw new ConflictError('EMAIL_EXISTS');
+            const error = new ConflictError('EMAIL_EXISTS');
+            logError('createUser', error, context);
+            return error;
           }
           if (existingUser.username === username.toLowerCase()) {
-            throw new ConflictError('USERNAME_EXISTS');
+            const error = new ConflictError('USERNAME_EXISTS');
+            logError('createUser', error, context);
+            return error;
           }
         }
 
@@ -85,19 +100,35 @@ export const userMutation = (t: any) => {
         });
 
         context.session.userId = newUser.id;
+        logger.info('User created successfully', {
+          userId: newUser.id,
+          email: newUser.email,
+        });
         return newUser;
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        if (error instanceof Error) {
+        logError('createUser', error, context);
+        if (error instanceof BaseError) {
           throw error; // Re-throw the specific error
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError('DATABASE_ERROR', error.message, 500, true, {
+            originalError: error.message,
+          });
+        } else {
+          throw new BaseError(
+            'UNKNOWN_ERROR',
+            'An unexpected error occurred',
+            500,
+            false,
+            { originalError: error.message }
+          );
         }
-        return new Error('UNKNOWN_ERROR');
       }
     },
   });
 
   t.field('loginUser', {
-    type: 'UserType',
+    type: UserType,
     args: {
       email: stringArg(),
       password: stringArg(),
@@ -108,10 +139,6 @@ export const userMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHORIZED, {
-            userId: context.session?.id,
-          });
 
         const validation = ZodUser.pick({
           email: true,
@@ -129,7 +156,7 @@ export const userMutation = (t: any) => {
             validationErrors: validation.error.errors,
           });
         }
-        
+
         const user = await context.prisma.user.findUnique({
           where: {
             email: email.toLowerCase(),
@@ -141,12 +168,12 @@ export const userMutation = (t: any) => {
             password: true,
           },
         });
-        
+
         // console.log("user from backend", user);
         if (!user) throw new BaseError(NOT_FOUND, 'user not found', 404, true);
-        
+
         const isCorrect = await verifyPassword(password, user.password);
-        console.log("Is corect:", isCorrect);
+        console.log('Is corect:', isCorrect);
         if (!isCorrect) return new AuthenticationError(INVALID_CREDENTIALS);
 
         context.session['userId'] = user.id;

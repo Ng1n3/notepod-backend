@@ -118,7 +118,7 @@ export const Query = queryType({
       },
       resolve: async (
         _: unknown,
-        { cursor = 0, isDeleted }: Icursor,
+        { cursor, isDeleted }: Icursor,
         context: Mycontext
       ) => {
         try {
@@ -314,7 +314,7 @@ export const Query = queryType({
     t.list.field('getPasswordFields', {
       type: PasswordType,
       args: {
-        cursor: intArg(),
+        cursor: intArg({default: 0}),
         isDeleted: booleanArg(),
       },
       resolve: async (
