@@ -155,14 +155,20 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
+          logError('updateNote', error, context);
+          return error;
+        }
 
         const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+        if (!userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('updateNote', error, context);
+          return error;
+        }
 
         const validation = ZodNote.pick({
           title: true,
@@ -182,17 +188,24 @@ export const noteMutation = (t: any) => {
           validation.error.issues.map((issue) => {
             console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
-          throw new ValidationError(INVALID_CREDENTIALS, {
+          const error = new ValidationError(INVALID_CREDENTIALS, {
             validationErrors: validation.error.errors,
           });
+          logError('updateNote', error, context);
+          return error;
         }
 
         const note = await context.prisma.note.findUnique({
           where: { id },
         });
 
-        if (!note)
-          return new BaseError(NOT_FOUND, 'Note not found', 404, true, { id });
+        if (!note) {
+          const error = new BaseError(NOT_FOUND, 'Note not found', 404, true, {
+            id,
+          });
+          logError('updateNote', error, context);
+          return error;
+        }
 
         const updatedNote = await context.prisma.note.update({
           where: { id },
@@ -205,10 +218,30 @@ export const noteMutation = (t: any) => {
           },
         });
 
+        logger.info(`Note updated successfully`, {
+          resolver: 'updateNote',
+          id: updatedNote.id,
+          title: updatedNote.title,
+        });
+
         return updatedNote;
-      } catch (error) {
-        console.error(error);
-        throw error;
+      } catch (error: any) {
+        logError('updatedTodo', error, context);
+        if (error instanceof BaseError) {
+          throw error; // Re-throw the specific error
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError('DATABASE_ERROR', error.message, 500, true, {
+            originalError: error.message,
+          });
+        } else {
+          throw new BaseError(
+            'UNKNOWN_ERROR',
+            'An unexpected error occurred',
+            500,
+            false,
+            { originalError: error.message }
+          );
+        }
       }
     },
   });
@@ -224,21 +257,32 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
+          logError('deleteNote', error, context);
+          return error;
+        }
 
-        // const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+        const userId = context.session.userId;
+        if (!userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('deleteNote', error, context);
+          return error;
+        }
 
         const note = await context.prisma.note.findUnique({
           where: { id },
         });
 
-        if (!note)
-          return new BaseError(NOT_FOUND, 'Note not found', 404, true, { id });
+        if (!note) {
+          const error = new BaseError(NOT_FOUND, 'Note not found', 404, true, {
+            id,
+          });
+          logError('deleteNote', error, context);
+          return error;
+        }
 
         await context.prisma.note.delete({
           where: {
@@ -246,10 +290,30 @@ export const noteMutation = (t: any) => {
           },
         });
 
+        logger.info(`Note deleted successfully`, {
+          resolver: 'deleteNote',
+          id: note.id,
+          title: note.title,
+        });
+
         return note;
-      } catch (error) {
-        console.error('error loggin out', error);
-        throw error;
+      } catch (error: any) {
+        logError('deleteTodo', error, context);
+        if (error instanceof BaseError) {
+          throw error; // Re-throw the specific error
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError('DATABASE_ERROR', error.message, 500, true, {
+            originalError: error.message,
+          });
+        } else {
+          throw new BaseError(
+            'UNKNOWN_ERROR',
+            'An unexpected error occurred',
+            500,
+            false,
+            { originalError: error.message }
+          );
+        }
       }
     },
   });
