@@ -405,7 +405,7 @@ export const noteMutation = (t: any) => {
           title: updatedNote.title,
         });
         return updatedNote;
-      } catch (error:any) {
+      } catch (error: any) {
         logError('createUser', error, context);
         if (error instanceof BaseError) {
           throw error; // Re-throw the specific error
@@ -437,20 +437,31 @@ export const noteMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
+          logError('softDeleteNote', error, context);
+          return error;
+        }
 
-        // const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+        const userId = context.session.userId;
+        if (!userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('softDeleteNote', error, context);
+          return error;
+        }
 
         const selectedNote = await context.prisma.note.findUnique({
           where: { id },
         });
-        if (!selectedNote)
-          return new BaseError(NOT_FOUND, 'Note not found', 404, true, { id });
+        if (!selectedNote) {
+          const error = new BaseError(NOT_FOUND, 'Note not found', 404, true, {
+            id,
+          });
+          logError('softDeleteNote', error, context);
+          return error;
+        }
 
         if (selectedNote.isDeleted && selectedNote.deletedAt)
           return selectedNote;
@@ -476,10 +487,31 @@ export const noteMutation = (t: any) => {
             },
           },
         });
+
+        logger.info(`Note soft deleted successfully`, {
+          resolver: 'softDelete',
+          id: updatedNote.id,
+          title: updatedNote.title,
+        });
+
         return updatedNote;
-      } catch (error) {
-        console.error('error restoring note', error);
-        throw error;
+      } catch (error: any) {
+        logError('createUser', error, context);
+        if (error instanceof BaseError) {
+          throw error; // Re-throw the specific error
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError('DATABASE_ERROR', error.message, 500, true, {
+            originalError: error.message,
+          });
+        } else {
+          throw new BaseError(
+            'UNKNOWN_ERROR',
+            'An unexpected error occurred',
+            500,
+            false,
+            { originalError: error.message }
+          );
+        }
       }
     },
   });
