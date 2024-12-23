@@ -461,7 +461,7 @@ export const todoMutation = (t: any) => {
   });
 
   t.field('softDeleteTodo', {
-    type: 'TodoType',
+    type: TodoType,
     args: {
       id: stringArg(),
     },
