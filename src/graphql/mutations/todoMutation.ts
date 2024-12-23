@@ -2,8 +2,6 @@ import { Todos } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { booleanArg, stringArg } from 'nexus';
 import {
-  ALREADY_TAKEN,
-  DATABASE_ERROR,
   INVALID_CREDENTIALS,
   NOT_AUTHENTICATED,
   NOT_FOUND,
@@ -11,8 +9,6 @@ import {
 } from '../../constants';
 import { AuthenticationError } from '../../errors/AuthenticationError';
 import { BaseError } from '../../errors/BaseError';
-import { ConflictError } from '../../errors/ConflictError';
-import { DatabaseError } from '../../errors/DatabaseError';
 import { ValidationError } from '../../errors/ValidationError';
 import { Mycontext } from '../../interfaces';
 import { generateUniqueTitle, isAuthenticated } from '../../util';

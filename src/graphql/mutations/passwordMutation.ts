@@ -2,8 +2,6 @@ import { Password } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { booleanArg, stringArg } from 'nexus';
 import {
-  ALREADY_TAKEN,
-  DATABASE_ERROR,
   INVALID_CREDENTIALS,
   NOT_AUTHENTICATED,
   NOT_FOUND,
@@ -11,14 +9,15 @@ import {
 } from '../../constants';
 import { AuthenticationError } from '../../errors/AuthenticationError';
 import { BaseError } from '../../errors/BaseError';
-import { ConflictError } from '../../errors/ConflictError';
-import { DatabaseError } from '../../errors/DatabaseError';
 import { ValidationError } from '../../errors/ValidationError';
 import { Mycontext } from '../../interfaces';
 import { generateUniqueTitle, isAuthenticated } from '../../util';
+import { logError, logger } from '../../winston';
 import { ZodPassword } from '../validator/schema';
 
 // const FIXED_USER_ID = '24992fef-d16c-4e63-be0b-b169cf9b93f9';
+
+
 
 export const passwordMutation = (t: any) => {
   t.field('createPassword', {
@@ -50,14 +49,20 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
-
+          logError('deleteUser', error, context);
+          return error;
+        }
         const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+
+        if (!userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('deleteUser', error, context);
+          return error;
+        }
 
         const validation = ZodPassword.pick({
           fieldname: true,
@@ -81,9 +86,11 @@ export const passwordMutation = (t: any) => {
           validation.error.issues.map((issue) => {
             console.error(`Error in ${issue.path.join('.')}: ${issue.message}`);
           });
-          throw new ValidationError(INVALID_CREDENTIALS, {
+          const error = new ValidationError(INVALID_CREDENTIALS, {
             validationErrors: validation.error.errors,
           });
+          logError('createPassword', error, context);
+          return error;
         }
 
         const uniqueFieldName = await generateUniqueTitle(
@@ -101,7 +108,7 @@ export const passwordMutation = (t: any) => {
             username,
             isDeleted: isDeleted ?? false,
             deletedAt: deletedAt ? new Date(deletedAt) : null,
-            userId: context.session.userId,
+            userId: context.session.userId!,
           },
           select: {
             id: true,
@@ -119,24 +126,31 @@ export const passwordMutation = (t: any) => {
             },
           },
         });
-        // console.log('backend passwordField: ', passwordField);
-        return passwordField;
-      } catch (error) {
-        if (
-          error instanceof PrismaClientKnownRequestError &&
-          error.code === 'p2002'
-        ) {
-          throw new ConflictError(ALREADY_TAKEN, {
-            fieldname,
-            userId: context.session.userId,
-          }); // Handle unique constraint violation
-        }
 
-        if (error instanceof BaseError) throw error;
-
-        throw new DatabaseError(DATABASE_ERROR, {
-          originalError: error instanceof Error ? error.message : String(error),
+        logger.info('Todo created successfully', {
+          resolver: 'createTodo',
+          id: passwordField.id,
+          title: passwordField.fieldname,
         });
+
+        return passwordField;
+      } catch (error: any) {
+        logError('createTodo', error, context);
+        if (error instanceof BaseError) {
+          throw error; // Re-throw the specific error
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError('DATABASE_ERROR', error.message, 500, true, {
+            originalError: error.message,
+          });
+        } else {
+          throw new BaseError(
+            'UNKNOWN_ERROR',
+            'An unexpected error occurred',
+            500,
+            false,
+            { originalError: error.message }
+          );
+        }
       }
     },
   });
@@ -347,7 +361,7 @@ export const passwordMutation = (t: any) => {
 
         if (selectedPassword.isDeleted === false && selectedPassword.deletedAt)
           return;
-        
+
         const updatedPassword = await context.prisma.password.update({
           where: { id },
           data: {
