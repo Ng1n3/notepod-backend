@@ -282,7 +282,7 @@ export const todoMutation = (t: any) => {
   });
 
   t.field('deleteTodo', {
-    type: 'TodoType',
+    type: TodoType,
     args: {
       id: stringArg(),
     },

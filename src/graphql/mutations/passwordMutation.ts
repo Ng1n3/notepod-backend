@@ -1,6 +1,5 @@
 import { Password } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { error } from 'console';
 import { booleanArg, stringArg } from 'nexus';
 import {
   INVALID_CREDENTIALS,
@@ -304,7 +303,7 @@ export const passwordMutation = (t: any) => {
   });
 
   t.field('deletedPassword', {
-    type: 'PasswordType',
+    type: PasswordType,
     args: {
       id: stringArg(),
     },
@@ -314,38 +313,68 @@ export const passwordMutation = (t: any) => {
       context: Mycontext
     ) => {
       try {
-        if (!isAuthenticated(context))
-          return new AuthenticationError(NOT_AUTHENTICATED, {
+        if (!isAuthenticated(context)) {
+          const error = new AuthenticationError(NOT_AUTHENTICATED, {
             userId: context.session?.id,
           });
+          logError('deletedPassword', error, context);
+          return error;
+        }
 
-        // const userId = context.session.userId;
-        if (!context.session.userId)
-          throw new AuthenticationError(UNKNOWN_SESSION);
+        const userId = context.session.userId;
+        if (!userId) {
+          const error = new AuthenticationError(UNKNOWN_SESSION);
+          logError('deletedPassword', error, context);
+          return error;
+        }
 
         const passwordField = await context.prisma.password.findUnique({
           where: { id },
         });
 
-        if (!passwordField)
-          return new BaseError(
+        if (!passwordField) {
+          const error = new BaseError(
             NOT_FOUND,
             'Password field not found',
             404,
             true,
             { id }
           );
+          logError('deletedPassword', error, context);
+          return error;
+        }
 
         await context.prisma.password.delete({
           where: { id },
         });
+
+        logger.info('Password deleted successfully', {
+          resolver: 'deletedPassword',
+          id: passwordField.id,
+          passwordField: passwordField.fieldname,
+        });
         return passwordField;
-      } catch (error) {
-        console.error(error);
-        throw error;
+      } catch (error: any) {
+        logError('deletedPassword', error, context);
+        if (error instanceof BaseError) {
+          throw error; // Re-throw the specific error
+        } else if (error instanceof PrismaClientKnownRequestError) {
+          throw new BaseError('DATABASE_ERROR', error.message, 500, true, {
+            originalError: error.message,
+          });
+        } else {
+          throw new BaseError(
+            'UNKNOWN_ERROR',
+            'An unexpected error occurred',
+            500,
+            false,
+            { originalError: error.message }
+          );
+        }
       }
     },
   });
+
   t.field('restorePassword', {
     type: 'PasswordType',
     args: {
