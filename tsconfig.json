@@ -28,8 +28,10 @@
     "noUnusedParameters": true,                       /* Raise an error when a function parameter isn't read. */
     "noImplicitReturns": true,                        /* Enable error reporting for codepaths that do not explicitly return in a function. */
     "noFallthroughCasesInSwitch": true,               /* Enable error reporting for fallthrough cases in switch statements. */
-    "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
+    "skipLibCheck": true,                                 /* Skip type checking all .d.ts files. */
+    "types": ["jest", "node", "@testing-library/jest-dom"],
+  
   },
-  "exclude": ["node_modules"],
-  "include": ["./src/**/*.ts"]
+  "include": ["./src/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
 }

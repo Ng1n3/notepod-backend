@@ -1,25 +1,61 @@
-import { PrismaClient } from '@prisma/client';
-
 export type MockContext = {
-  prisma: PrismaClient;
+  req: Record<string, any>;  // Simple mock for Request
+  res: Record<string, any>;  // Simple mock for Response
+  prisma: {
+    note: {
+      create: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+      findUnique: jest.Mock;
+    };
+    $disconnect: jest.Mock;
+  };
   session: {
     userId: string;
     id: string;
-    cookie: string;
-    regenerate: () => void;
-    destroy: () => void;
+    cookie: Record<string, any>;
+    regenerate: jest.Mock;
+    destroy: jest.Mock;
+    reload: jest.Mock;
+    resetMaxAge: jest.Mock;
+    save: jest.Mock;
+    touch: jest.Mock;
+  };
+  redis: {
+    get: jest.Mock;
+    set: jest.Mock;
+    del: jest.Mock;
   };
 };
 
 export function createMockContext(): MockContext {
   return {
-    prisma: new PrismaClient(),
+    req: {},
+    res: {},
+    prisma: {
+      note: {
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+        findUnique: jest.fn(),
+      },
+      $disconnect: jest.fn().mockResolvedValue(undefined),
+    },
     session: {
       userId: 'test-user-id',
       id: 'test-session-id',
-      cookie: 'test-cookie',
-      regenerate: () => {},
-      destroy: () => {},
+      cookie: {},
+      regenerate: jest.fn(cb => cb(null)),
+      destroy: jest.fn(cb => cb(null)),
+      reload: jest.fn(cb => cb(null)),
+      resetMaxAge: jest.fn(),
+      save: jest.fn(cb => cb(null)),
+      touch: jest.fn(),
     },
+    redis: {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    }
   };
 }
