@@ -29,7 +29,7 @@ describe('Note Mutations', () => {
           }
           type Query {
             getNotes(isDeleted: Boolean!): [NoteType!]!
-            note(id: ID!): NoteType
+            getNote(id: ID!): NoteType
           }
           type Mutation {
             createNote(
@@ -50,6 +50,11 @@ describe('Note Mutations', () => {
             getNotes: async (_parent, { isDeleted }, _: Mycontext) => {
               return mockCtx.prisma.note.findMany({
                 where: { isDeleted },
+              });
+            },
+            getNote: async (_parent, { id }, _: Mycontext) => {
+              return mockCtx.prisma.note.findUnique({
+                where: { id },
               });
             },
           },
@@ -185,6 +190,66 @@ describe('Note Mutations', () => {
         where: { isDeleted: false },
       });
       expect(mockCtx.prisma.note.findMany).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Note Query', () => {
+    it('should return a single note by Id', async () => {
+      const mockNote = {
+        id: '1',
+        title: 'Test Note',
+        body: 'This is a test note',
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: new Date().toISOString(),
+        user: {
+          email: 'test@example.com',
+          username: 'testUser',
+        },
+      };
+
+      mockCtx.prisma.note.findUnique = jest.fn().mockResolvedValue(mockNote);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+          query GetNote($id: ID!) {
+            getNote(id: $id) {
+              id
+              title
+              body
+              isDeleted
+              deletedAt
+              updatedAt
+              user {
+                email
+                username
+              }
+            }
+          }
+        `,
+          variables: {
+            id: '1',
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      console.log(
+        'response from single note requrest: ',
+        JSON.stringify(res.body)
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.getNote).toEqual(mockNote);
+      expect(mockCtx.prisma.note.findUnique).toHaveBeenCalledWith({
+        where: { id: '1' },
+      });
+      expect(mockCtx.prisma.note.findUnique).toHaveBeenCalledTimes(1);
     });
   });
 
