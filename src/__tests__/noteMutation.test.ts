@@ -532,8 +532,48 @@ describe('Note Operation', () => {
       expect(mockCtx.prisma.note.delete).toHaveBeenCalledTimes(1);
     });
 
-    
+    it('should handle deletion of non-existent note', async () => {
+      mockCtx.prisma.note.delete = jest
+        .fn()
+        .mockRejectedValue(new Error('Note not found'));
+
+      const res = await server.executeOperation(
+        {
+          query: `
+            mutation DeleteNote($id: ID!) {
+              deleteNote(id: $id) {
+                id
+                title
+                body
+                isDeleted
+                deletedAt
+                updatedAt
+                user {
+                  email
+                  username
+                }
+              }
+            }
+          `,
+          variables: {
+            id: 'non-existent-id',
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const errors =
+        res.body.kind === 'single' ? res.body.singleResult.errors : null;
+
+      // Verify we got an error response
+      expect(errors).toBeDefined();
+      expect(errors?.[0].message).toContain('Note not found');
+    });
   });
+
+  
   // it('deletes a note', async () => {
   //   const { mutate } = createTestClient(server);
 
