@@ -39,6 +39,7 @@ describe('Note Operation', () => {
             ): NoteType
             updateNote(id: ID!, title: String, body: String): NoteType
             softDeleteNote(id: ID!): NoteType
+            deleteNote(id: ID!): NoteType
           }
         `,
         resolvers: {
@@ -57,6 +58,9 @@ describe('Note Operation', () => {
                   deletedAt: new Date().toISOString(),
                 },
               });
+            },
+            deleteNote: async (_parent, { id }, _: Mycontext) => {
+              return mockCtx.prisma.note.delete({ where: { id } });
             },
           },
           Query: {
@@ -448,6 +452,88 @@ describe('Note Operation', () => {
     });
   });
 
+  describe('Delete a note', () => {
+    it('should remove the note from the database', async () => {
+      const mockNotes = [
+        {
+          id: '1',
+          title: 'First Note',
+          body: 'First note body',
+          isDeleted: true,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          title: 'Second Note',
+          body: 'Second note body',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+      ];
+
+      const mockDeletedNote = mockNotes[0];
+
+      mockCtx.prisma.note.delete = jest.fn().mockResolvedValue(mockDeletedNote);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+        mutation DeleteNote($id: ID!) {
+          deleteNote(id: $id) {
+              id
+              title
+              body
+              isDeleted
+              deletedAt
+              updatedAt
+              user {
+                email
+                username
+              }
+            }
+        }
+        `,
+          variables: {
+            id: mockDeletedNote.id,
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      console.log(
+        'Response from deleted Note: ',
+        JSON.stringify(res.body, null, 2)
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      // Verify the response matches the mock deleted note
+      expect(result?.deleteNote).toEqual(mockDeletedNote);
+
+      // Verify delete was called with correct parameters
+      expect(mockCtx.prisma.note.delete).toHaveBeenCalledWith({
+        where: { id: mockDeletedNote.id },
+      });
+
+      // Verify delete was called exactly once
+      expect(mockCtx.prisma.note.delete).toHaveBeenCalledTimes(1);
+    });
+
+    
+  });
   // it('deletes a note', async () => {
   //   const { mutate } = createTestClient(server);
 
