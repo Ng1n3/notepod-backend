@@ -2,9 +2,8 @@ import { ApolloServer } from '@apollo/server';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { Mycontext } from '../interfaces';
 import { createMockContext, MockContext } from '../testing/context';
-// import { Query } from '../graphql/Query';
 
-describe('Note Mutations', () => {
+describe('Note Operation', () => {
   let server: ApolloServer;
   let mockCtx: MockContext;
 
@@ -38,12 +37,16 @@ describe('Note Mutations', () => {
               deletedAt: String
               isDeleted: Boolean
             ): NoteType
+            updateNote(id: ID!, title: String, body: String): NoteType
           }
         `,
         resolvers: {
           Mutation: {
-            createNote: async (_parent, _, __: Mycontext) => {
-              return mockCtx.prisma.note.create();
+            createNote: async (_parent, args, __: Mycontext) => {
+              return mockCtx.prisma.note.create({ data: args });
+            },
+            updateNote: async (_parent, { id, ...data }, _: Mycontext) => {
+              return mockCtx.prisma.note.update({ where: { id }, data });
             },
           },
           Query: {
@@ -237,11 +240,6 @@ describe('Note Mutations', () => {
         }
       );
 
-      console.log(
-        'response from single note requrest: ',
-        JSON.stringify(res.body)
-      );
-
       const result =
         res.body.kind === 'single' ? res.body.singleResult.data : null;
 
@@ -253,36 +251,105 @@ describe('Note Mutations', () => {
     });
   });
 
-  // it('updates a note', async () => {
-  //   const { mutate } = createTestClient(server);
+  it('should return null for non-existent note', async () => {
+    mockCtx.prisma.note.findUnique = jest.fn().mockResolvedValue(null);
 
-  //   const res = await mutate({
+    const res = await server.executeOperation(
+      {
+        query: `
+        query GetNote($id: ID!) {
+          getNote(id: $id) {
+            id
+            title
+            body
+            isDeleted
+            deletedAt
+            updatedAt
+            user {
+              email
+              username
+            }
+          }
+        }`,
+        variables: {
+          id: 'non-existent-id',
+        },
+      },
+      {
+        contextValue: mockCtx,
+      }
+    );
 
-  //     mutation: `
-  //       mutation {
-  //         updateNote(
-  //           id: "test-note-id"
-  //           title: "Updated Test Note"
-  //           body: "This is an updated test note"
-  //         ) {
-  //           id
-  //           title
-  //           body
-  //           isDeleted
-  //           deletedAt
-  //           updatedAt
-  //           user {
-  //             email
-  //             username
-  //           }
-  //         }
-  //       }
-  //     `,
-  //   });
+    const result =
+      res.body.kind === 'single' ? res.body.singleResult.data : null;
 
-  //   expect(res.data.updateNote.title).toBe('Updated Test Note');
-  //   expect(res.data.updateNote.body).toBe('This is an updated test note');
-  // });
+    expect(result?.getNote).toBeNull();
+    expect(mockCtx.prisma.note.findUnique).toHaveBeenCalledTimes(1);
+    expect(mockCtx.prisma.note.findUnique).toHaveBeenCalledWith({
+      where: { id: 'non-existent-id' },
+    });
+  });
+
+  describe('updateNote mutation', () => {
+    it('should update a note successfully', async () => {
+      const mockUpdatedNote = {
+        id: '1',
+        title: 'Updated Title',
+        body: 'Updated body content',
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: new Date().toISOString(),
+        user: {
+          email: 'test@example.com',
+          username: 'testuser',
+        },
+      };
+
+      mockCtx.prisma.note.update = jest.fn().mockResolvedValue(mockUpdatedNote);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+            mutation UpdateNote($id: ID!, $title: String, $body: String) {
+              updateNote(id: $id, title: $title, body: $body) {
+                id
+                title
+                body
+                isDeleted
+                deletedAt
+                updatedAt
+                user {
+                  email
+                  username
+                }
+              }
+            }
+          `,
+          variables: {
+            id: '1',
+            title: 'Updated Title',
+            body: 'Updated body content',
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.updateNote).toEqual(mockUpdatedNote);
+      expect(mockCtx.prisma.note.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: {
+          title: 'Updated Title',
+          body: 'Updated body content',
+        },
+      });
+      expect(mockCtx.prisma.note.update).toHaveBeenCalledTimes(1);
+    });
+  });
 
   // it('deletes a note', async () => {
   //   const { mutate } = createTestClient(server);
