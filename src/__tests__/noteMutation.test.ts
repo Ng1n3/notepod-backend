@@ -38,6 +38,7 @@ describe('Note Operation', () => {
               isDeleted: Boolean
             ): NoteType
             updateNote(id: ID!, title: String, body: String): NoteType
+            softDeleteNote(id: ID!): NoteType
           }
         `,
         resolvers: {
@@ -47,6 +48,15 @@ describe('Note Operation', () => {
             },
             updateNote: async (_parent, { id, ...data }, _: Mycontext) => {
               return mockCtx.prisma.note.update({ where: { id }, data });
+            },
+            softDeleteNote: async (_parent, { id }, _: Mycontext) => {
+              return mockCtx.prisma.note.update({
+                where: { id },
+                data: {
+                  isDeleted: true,
+                  deletedAt: new Date().toISOString(),
+                },
+              });
             },
           },
           Query: {
@@ -347,6 +357,93 @@ describe('Note Operation', () => {
           body: 'Updated body content',
         },
       });
+      expect(mockCtx.prisma.note.update).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Soft delete note', () => {
+    it('should soft delete a note successfully', async () => {
+      const mockNotes = [
+        {
+          id: '1',
+          title: 'First Note',
+          body: 'First note body',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          title: 'Second Note',
+          body: 'Second note body',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+      ];
+
+      const mockDeletedNote = {
+        ...mockNotes[0],
+        isDeleted: true,
+        deletedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Mock the update operation
+      mockCtx.prisma.note.update = jest.fn().mockResolvedValue(mockDeletedNote);
+
+      // Execute the soft delete mutation
+      const res = await server.executeOperation(
+        {
+          query: `
+            mutation SoftDeleteNote($id: ID!) {
+              softDeleteNote(id: $id) {
+                id
+                title
+                body
+                isDeleted
+                deletedAt
+                updatedAt
+                user {
+                  email
+                  username
+                }
+              }
+            }
+          `,
+          variables: {
+            id: '1',
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      // Verify the response matches the mock deleted note
+      expect(result?.softDeleteNote).toEqual(mockDeletedNote);
+
+      // Verify the update was called with correct parameters
+      expect(mockCtx.prisma.note.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: {
+          isDeleted: true,
+          deletedAt: expect.any(String),
+        },
+      });
+
+      // Verify update was called exactly once
       expect(mockCtx.prisma.note.update).toHaveBeenCalledTimes(1);
     });
   });
