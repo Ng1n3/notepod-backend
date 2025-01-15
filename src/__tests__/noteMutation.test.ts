@@ -2,6 +2,7 @@ import { ApolloServer } from '@apollo/server';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { Mycontext } from '../interfaces';
 import { createMockContext, MockContext } from '../testing/context';
+// import { Query } from '../graphql/Query';
 
 describe('Note Mutations', () => {
   let server: ApolloServer;
@@ -27,7 +28,8 @@ describe('Note Mutations', () => {
             username: String!
           }
           type Query {
-            _: Boolean
+            getNotes(isDeleted: Boolean!): [NoteType!]!
+            note(id: ID!): NoteType
           }
           type Mutation {
             createNote(
@@ -42,6 +44,13 @@ describe('Note Mutations', () => {
           Mutation: {
             createNote: async (_parent, _, __: Mycontext) => {
               return mockCtx.prisma.note.create();
+            },
+          },
+          Query: {
+            getNotes: async (_parent, { isDeleted }, _: Mycontext) => {
+              return mockCtx.prisma.note.findMany({
+                where: { isDeleted },
+              });
             },
           },
         },
@@ -102,12 +111,80 @@ describe('Note Mutations', () => {
         }
       );
 
-      // console.log('Response: ', JSON.stringify(res.body, null, 2));
-      // console.log(mockCtx.prisma.note.create.mock);
-      // console.log('context: ', ctx);
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
 
-      expect(res.body.singleResult.data?.createNote).toEqual(mockNote);
-      expect(mockCtx.prisma.note.create).toHaveBeenCalledTimes(1)
+      expect(result?.createNote).toEqual(mockNote);
+      expect(mockCtx.prisma.note.create).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Note query', () => {
+    it('Should return all notes', async () => {
+      const mockNotes = [
+        {
+          id: '1',
+          title: 'First Note',
+          body: 'First note body',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          title: 'Second Note',
+          body: 'Second note body',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+      ];
+
+      mockCtx.prisma.note.findMany = jest.fn().mockResolvedValue(mockNotes);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+          query GetNotes($isDeleted: Boolean!) {
+            getNotes(isDeleted: $isDeleted) {
+              id
+             title
+             body
+            isDeleted
+            deletedAt
+            updatedAt
+            user {
+                email
+                username
+            }
+            }
+          }
+        `,
+          variables: {
+            isDeleted: false,
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.getNotes).toEqual(mockNotes);
+      expect(mockCtx.prisma.note.findMany).toHaveBeenCalledWith({
+        where: { isDeleted: false },
+      });
+      expect(mockCtx.prisma.note.findMany).toHaveBeenCalledTimes(1);
     });
   });
 

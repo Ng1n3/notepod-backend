@@ -1,12 +1,13 @@
 export type MockContext = {
-  req: Record<string, any>;  // Simple mock for Request
-  res: Record<string, any>;  // Simple mock for Response
+  req: Record<string, any>; // Simple mock for Request
+  res: Record<string, any>; // Simple mock for Response
   prisma: {
     note: {
       create: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
       findUnique: jest.Mock;
+      findMany: jest.Mock;
     };
     $disconnect: jest.Mock;
   };
@@ -38,6 +39,7 @@ export function createMockContext(): MockContext {
         update: jest.fn(),
         delete: jest.fn(),
         findUnique: jest.fn(),
+        findMany: jest.fn(),
       },
       $disconnect: jest.fn().mockResolvedValue(undefined),
     },
@@ -45,17 +47,17 @@ export function createMockContext(): MockContext {
       userId: 'test-user-id',
       id: 'test-session-id',
       cookie: {},
-      regenerate: jest.fn(cb => cb(null)),
-      destroy: jest.fn(cb => cb(null)),
-      reload: jest.fn(cb => cb(null)),
+      regenerate: jest.fn((cb) => cb(null)),
+      destroy: jest.fn((cb) => cb(null)),
+      reload: jest.fn((cb) => cb(null)),
       resetMaxAge: jest.fn(),
-      save: jest.fn(cb => cb(null)),
+      save: jest.fn((cb) => cb(null)),
       touch: jest.fn(),
     },
     redis: {
       get: jest.fn(),
       set: jest.fn(),
       del: jest.fn(),
-    }
+    },
   };
 }
