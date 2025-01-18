@@ -46,13 +46,13 @@ describe('Note Operation', () => {
         resolvers: {
           Mutation: {
             createNote: async (_parent, args, __: Mycontext) => {
-              return mockCtx.prisma.note.create({ data: args });
+              return mockCtx.prisma.note?.create({ data: args });
             },
             updateNote: async (_parent, { id, ...data }, _: Mycontext) => {
-              return mockCtx.prisma.note.update({ where: { id }, data });
+              return mockCtx.prisma.note?.update({ where: { id }, data });
             },
             softDeleteNote: async (_parent, { id }, _: Mycontext) => {
-              return mockCtx.prisma.note.update({
+              return mockCtx.prisma.note?.update({
                 where: { id },
                 data: {
                   isDeleted: true,
@@ -61,10 +61,10 @@ describe('Note Operation', () => {
               });
             },
             deleteNote: async (_parent, { id }, _: Mycontext) => {
-              return mockCtx.prisma.note.delete({ where: { id } });
+              return mockCtx.prisma.note?.delete({ where: { id } });
             },
             restoreNote: async (_parent, { id }, _: Mycontext) => {
-              return mockCtx.prisma.note.update({
+              return mockCtx.prisma.note?.update({
                 where: { id },
                 data: { isDeleted: false, deletedAt: null },
               });
@@ -72,12 +72,12 @@ describe('Note Operation', () => {
           },
           Query: {
             getNotes: async (_parent, { isDeleted }, _: Mycontext) => {
-              return mockCtx.prisma.note.findMany({
+              return mockCtx.prisma.note?.findMany({
                 where: { isDeleted },
               });
             },
             getNote: async (_parent, { id }, _: Mycontext) => {
-              return mockCtx.prisma.note.findUnique({
+              return mockCtx.prisma.note?.findUnique({
                 where: { id },
               });
             },
@@ -111,7 +111,7 @@ describe('Note Operation', () => {
       };
 
       // Mock the prisma create operation
-      mockCtx.prisma.note.create = jest.fn().mockResolvedValue(mockNote);
+      mockCtx.prisma.note!.create = jest.fn().mockResolvedValue(mockNote);
 
       const res = await server.executeOperation(
         {
@@ -144,7 +144,7 @@ describe('Note Operation', () => {
         res.body.kind === 'single' ? res.body.singleResult.data : null;
 
       expect(result?.createNote).toEqual(mockNote);
-      expect(mockCtx.prisma.note.create).toHaveBeenCalledTimes(1);
+      expect(mockCtx.prisma.note?.create).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -210,10 +210,10 @@ describe('Note Operation', () => {
         res.body.kind === 'single' ? res.body.singleResult.data : null;
 
       expect(result?.getNotes).toEqual(mockNotes);
-      expect(mockCtx.prisma.note.findMany).toHaveBeenCalledWith({
+      expect(mockCtx.prisma.note?.findMany).toHaveBeenCalledWith({
         where: { isDeleted: false },
       });
-      expect(mockCtx.prisma.note.findMany).toHaveBeenCalledTimes(1);
+      expect(mockCtx.prisma.note?.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -232,7 +232,7 @@ describe('Note Operation', () => {
         },
       };
 
-      mockCtx.prisma.note.findUnique = jest.fn().mockResolvedValue(mockNote);
+      mockCtx.prisma.note?.findUnique = jest.fn().mockResolvedValue(mockNote);
 
       const res = await server.executeOperation(
         {
@@ -265,15 +265,15 @@ describe('Note Operation', () => {
         res.body.kind === 'single' ? res.body.singleResult.data : null;
 
       expect(result?.getNote).toEqual(mockNote);
-      expect(mockCtx.prisma.note.findUnique).toHaveBeenCalledWith({
+      expect(mockCtx.prisma.note?.findUnique).toHaveBeenCalledWith({
         where: { id: '1' },
       });
-      expect(mockCtx.prisma.note.findUnique).toHaveBeenCalledTimes(1);
+      expect(mockCtx.prisma.note?.findUnique).toHaveBeenCalledTimes(1);
     });
   });
 
   it('should return null for non-existent note', async () => {
-    mockCtx.prisma.note.findUnique = jest.fn().mockResolvedValue(null);
+    mockCtx.prisma.note?.findUnique = jest.fn().mockResolvedValue(null);
 
     const res = await server.executeOperation(
       {
@@ -305,8 +305,8 @@ describe('Note Operation', () => {
       res.body.kind === 'single' ? res.body.singleResult.data : null;
 
     expect(result?.getNote).toBeNull();
-    expect(mockCtx.prisma.note.findUnique).toHaveBeenCalledTimes(1);
-    expect(mockCtx.prisma.note.findUnique).toHaveBeenCalledWith({
+    expect(mockCtx.prisma.note?.findUnique).toHaveBeenCalledTimes(1);
+    expect(mockCtx.prisma.note?.findUnique).toHaveBeenCalledWith({
       where: { id: 'non-existent-id' },
     });
   });
@@ -326,7 +326,7 @@ describe('Note Operation', () => {
         },
       };
 
-      mockCtx.prisma.note.update = jest.fn().mockResolvedValue(mockUpdatedNote);
+      mockCtx.prisma.note?.update = jest.fn().mockResolvedValue(mockUpdatedNote);
 
       const res = await server.executeOperation(
         {
@@ -361,14 +361,14 @@ describe('Note Operation', () => {
         res.body.kind === 'single' ? res.body.singleResult.data : null;
 
       expect(result?.updateNote).toEqual(mockUpdatedNote);
-      expect(mockCtx.prisma.note.update).toHaveBeenCalledWith({
+      expect(mockCtx.prisma.note?.update).toHaveBeenCalledWith({
         where: { id: '1' },
         data: {
           title: 'Updated Title',
           body: 'Updated body content',
         },
       });
-      expect(mockCtx.prisma.note.update).toHaveBeenCalledTimes(1);
+      expect(mockCtx.prisma.note?.update).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -409,7 +409,7 @@ describe('Note Operation', () => {
       };
 
       // Mock the update operation
-      mockCtx.prisma.note.update = jest.fn().mockResolvedValue(mockDeletedNote);
+      mockCtx.prisma.note?.update = jest.fn().mockResolvedValue(mockDeletedNote);
 
       // Execute the soft delete mutation
       const res = await server.executeOperation(
@@ -446,7 +446,7 @@ describe('Note Operation', () => {
       expect(result?.softDeleteNote).toEqual(mockDeletedNote);
 
       // Verify the update was called with correct parameters
-      expect(mockCtx.prisma.note.update).toHaveBeenCalledWith({
+      expect(mockCtx.prisma.note?.update).toHaveBeenCalledWith({
         where: { id: '1' },
         data: {
           isDeleted: true,
@@ -455,7 +455,7 @@ describe('Note Operation', () => {
       });
 
       // Verify update was called exactly once
-      expect(mockCtx.prisma.note.update).toHaveBeenCalledTimes(1);
+      expect(mockCtx.prisma.note?.update).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -490,7 +490,7 @@ describe('Note Operation', () => {
 
       const mockDeletedNote = mockNotes[0];
 
-      mockCtx.prisma.note.delete = jest.fn().mockResolvedValue(mockDeletedNote);
+      mockCtx.prisma.note?.delete = jest.fn().mockResolvedValue(mockDeletedNote);
 
       const res = await server.executeOperation(
         {
@@ -531,16 +531,16 @@ describe('Note Operation', () => {
       expect(result?.deleteNote).toEqual(mockDeletedNote);
 
 
-      expect(mockCtx.prisma.note.delete).toHaveBeenCalledWith({
+      expect(mockCtx.prisma.note?.delete).toHaveBeenCalledWith({
         where: { id: mockDeletedNote.id },
       });
 
 
-      expect(mockCtx.prisma.note.delete).toHaveBeenCalledTimes(1);
+      expect(mockCtx.prisma.note?.delete).toHaveBeenCalledTimes(1);
     });
 
     it('should handle deletion of non-existent note', async () => {
-      mockCtx.prisma.note.delete = jest
+      mockCtx.prisma.note?.delete = jest
         .fn()
         .mockRejectedValue(new Error('Note not found'));
 
@@ -611,7 +611,7 @@ describe('Note Operation', () => {
 
       const mockedRestoredNote = mockNotes[0];
 
-      mockCtx.prisma.note.update = jest
+      mockCtx.prisma.note?.update = jest
         .fn()
         .mockResolvedValue(mockedRestoredNote);
 
@@ -649,14 +649,14 @@ describe('Note Operation', () => {
         res.body.kind === 'single' ? res.body.singleResult.data : null;
 
       expect(result?.restoreNote).toEqual(mockedRestoredNote);
-      expect(mockCtx.prisma.note.update).toHaveBeenCalledWith({
+      expect(mockCtx.prisma.note?.update).toHaveBeenCalledWith({
         where: { id: '1' },
         data: {
           isDeleted: false,
           deletedAt: null,
         },
       });
-      expect(mockCtx.prisma.note.update).toHaveBeenCalledTimes(1);
+      expect(mockCtx.prisma.note?.update).toHaveBeenCalledTimes(1);
     });
   });
 });

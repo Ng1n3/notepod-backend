@@ -10,6 +10,14 @@ export type MockContext = {
       findMany: jest.Mock;
       softDeleteNote: jest.Mock;
     };
+    todo: {
+      create: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+      findUnique: jest.Mock;
+      findMany: jest.Mock;
+      softDeleteNote: jest.Mock;
+    }
     $disconnect: jest.Mock;
   };
   session: {
@@ -36,6 +44,14 @@ export function createMockContext(): MockContext {
     res: {},
     prisma: {
       note: {
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+        softDeleteNote: jest.fn(),
+      },
+      todo: {
         create: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
