@@ -141,7 +141,7 @@ describe('Todo Operation', () => {
             title: mockTodo.title,
             body: mockTodo.body,
             priority: mockTodo.priority,
-            dueDate: mockTodo.dueDate
+            dueDate: mockTodo.dueDate,
           },
         },
         {
@@ -154,6 +154,81 @@ describe('Todo Operation', () => {
 
       expect(result?.createTodo).toEqual(mockTodo);
       expect(mockCtx.prisma.todo.create).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Todo Query', () => {
+    it('it should return all todos', async () => {
+      const mockTodos = [
+        {
+          id: '1',
+          title: 'This is a test Todo',
+          body: 'This is a test todo for the body',
+          priority: 'LOW',
+          dueDate: new Date().toISOString(),
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          title: 'This is a test Todo 2',
+          body: 'This is a test todo for the body 2',
+          priority: 'HIGH',
+          dueDate: new Date().toISOString(),
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+      ];
+
+      mockCtx.prisma.todo.findMany = jest.fn().mockResolvedValue(mockTodos);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+        query GetTodos($isDeleted: Boolean!) {
+          getTodos(isDeleted: $isDeleted) {
+            id
+           title
+           body
+          isDeleted
+          priority
+          dueDate
+          deletedAt
+          updatedAt
+          user {
+              email
+              username
+          }
+          }
+        }
+          `,
+          variables: {
+            isDeleted: false,
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.getTodos).toEqual(mockTodos);
+      expect(mockCtx.prisma.todo.findMany).toHaveBeenCalledWith({
+        where: { isDeleted: false },
+      });
+      expect(mockCtx.prisma.todo.findMany).toHaveBeenCalledTimes(1);
     });
   });
 });
