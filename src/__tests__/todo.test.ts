@@ -231,4 +231,63 @@ describe('Todo Operation', () => {
       expect(mockCtx.prisma.todo.findMany).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Todo Query', () => {
+    it('returns a single Todo by id', async () => {
+      const mockTodo = {
+        id: '1',
+        title: 'This is a test Todo',
+        body: 'This is a test todo for the body',
+        priority: 'LOW',
+        dueDate: new Date().toISOString(),
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: new Date().toISOString(),
+        user: {
+          email: 'test@example.com',
+          username: 'testuser',
+        },
+      };
+
+      mockCtx.prisma.todo.findUnique = jest.fn().mockResolvedValue(mockTodo);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+        query GetTodo($id: ID!) {
+          getTodo(id: $id) {
+            id
+           title
+           body
+          isDeleted
+          priority
+          dueDate
+          deletedAt
+          updatedAt
+          user {
+              email
+              username
+          }
+          }
+        }
+          `,
+          variables: {
+            id: mockTodo.id,
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.getTodo).toEqual(mockTodo);
+      expect(mockCtx.prisma.todo.findUnique).toHaveBeenCalledWith({
+        where: { id: mockTodo.id },
+      });
+      expect(mockCtx.prisma.todo.findUnique).toHaveBeenCalledTimes(1);
+    });
+  });
 });
