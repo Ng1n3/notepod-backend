@@ -16,7 +16,7 @@ export type MockContext = {
       delete: jest.Mock;
       findUnique: jest.Mock;
       findMany: jest.Mock;
-      softDeleteNote: jest.Mock;
+      softDeleteTodo: jest.Mock;
     }
     $disconnect: jest.Mock;
   };
@@ -57,7 +57,7 @@ export function createMockContext(): MockContext {
         delete: jest.fn(),
         findUnique: jest.fn(),
         findMany: jest.fn(),
-        softDeleteNote: jest.fn(),
+        softDeleteTodo: jest.fn(),
       },
       $disconnect: jest.fn().mockResolvedValue(undefined),
     },
