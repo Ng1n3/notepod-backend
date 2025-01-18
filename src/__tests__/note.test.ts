@@ -527,15 +527,15 @@ describe('Note Operation', () => {
       const result =
         res.body.kind === 'single' ? res.body.singleResult.data : null;
 
-      // Verify the response matches the mock deleted note
+
       expect(result?.deleteNote).toEqual(mockDeletedNote);
 
-      // Verify delete was called with correct parameters
+
       expect(mockCtx.prisma.note.delete).toHaveBeenCalledWith({
         where: { id: mockDeletedNote.id },
       });
 
-      // Verify delete was called exactly once
+
       expect(mockCtx.prisma.note.delete).toHaveBeenCalledTimes(1);
     });
 
@@ -659,3 +659,4 @@ describe('Note Operation', () => {
       expect(mockCtx.prisma.note.update).toHaveBeenCalledTimes(1);
     });
   });
+});
