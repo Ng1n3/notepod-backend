@@ -3,13 +3,6 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { Mycontext } from '../interfaces';
 import { createMockContext, MockContext } from '../testing/context';
 
-// type Priority = {
-//   low: 'LOW';
-//   medium: 'MEDIUM';
-//   high: 'HIGH';
-//   critical: 'CRITICAL';
-// };
-
 describe('Todo Operation', () => {
   let server: ApolloServer;
   let mockCtx: MockContext;
@@ -50,11 +43,12 @@ describe('Todo Operation', () => {
               dueDate: String!
               deletedAt: String
               isDeleted: Boolean
-            ): NoteType
-            updateNote(id: ID!, title: String, body: String): NoteType
-            softDeleteNote(id: ID!): NoteType
-            deleteNote(id: ID!): NoteType
-            restoreNote(id: ID!): NoteType
+            ): TodoType
+            updateTodo(id: ID!, title: String, body: String): TodoType
+            softDeleteTodo(id: ID!): TodoType
+            deleteTodo(id: ID!): TodoType
+            restoreTodo(id: ID!): TodoType
+      }
         `,
         resolvers: {
           Mutation: {
@@ -126,12 +120,14 @@ describe('Todo Operation', () => {
       const res = await server.executeOperation(
         {
           query: `
-          mutation createTodo($title: String!, $body: String!, $priority: String!) {
-            createNote(title: $title, body: $body, priority: $priority) {
+          mutation createTodo($title: String!, $body: String!, $priority: String!,  $dueDate: String!) {
+            createTodo(title: $title, body: $body, priority: $priority, dueDate: $dueDate) {
               id
               title
               body
               isDeleted
+              dueDate
+              priority
               deletedAt
               updatedAt
               user {
@@ -145,6 +141,7 @@ describe('Todo Operation', () => {
             title: mockTodo.title,
             body: mockTodo.body,
             priority: mockTodo.priority,
+            dueDate: mockTodo.dueDate
           },
         },
         {
