@@ -232,7 +232,7 @@ describe('Note Operation', () => {
         },
       };
 
-      mockCtx.prisma.note?.findUnique = jest.fn().mockResolvedValue(mockNote);
+      mockCtx.prisma.note!.findUnique = jest.fn().mockResolvedValue(mockNote);
 
       const res = await server.executeOperation(
         {
@@ -273,7 +273,7 @@ describe('Note Operation', () => {
   });
 
   it('should return null for non-existent note', async () => {
-    mockCtx.prisma.note?.findUnique = jest.fn().mockResolvedValue(null);
+    mockCtx.prisma.note!.findUnique = jest.fn().mockResolvedValue(null);
 
     const res = await server.executeOperation(
       {
@@ -326,7 +326,7 @@ describe('Note Operation', () => {
         },
       };
 
-      mockCtx.prisma.note?.update = jest.fn().mockResolvedValue(mockUpdatedNote);
+      mockCtx.prisma.note!.update = jest.fn().mockResolvedValue(mockUpdatedNote);
 
       const res = await server.executeOperation(
         {
@@ -409,7 +409,7 @@ describe('Note Operation', () => {
       };
 
       // Mock the update operation
-      mockCtx.prisma.note?.update = jest.fn().mockResolvedValue(mockDeletedNote);
+      mockCtx.prisma.note!.update = jest.fn().mockResolvedValue(mockDeletedNote);
 
       // Execute the soft delete mutation
       const res = await server.executeOperation(
@@ -490,7 +490,7 @@ describe('Note Operation', () => {
 
       const mockDeletedNote = mockNotes[0];
 
-      mockCtx.prisma.note?.delete = jest.fn().mockResolvedValue(mockDeletedNote);
+      mockCtx.prisma.note!.delete = jest.fn().mockResolvedValue(mockDeletedNote);
 
       const res = await server.executeOperation(
         {
@@ -540,7 +540,7 @@ describe('Note Operation', () => {
     });
 
     it('should handle deletion of non-existent note', async () => {
-      mockCtx.prisma.note?.delete = jest
+      mockCtx.prisma.note!.delete = jest
         .fn()
         .mockRejectedValue(new Error('Note not found'));
 
@@ -611,7 +611,7 @@ describe('Note Operation', () => {
 
       const mockedRestoredNote = mockNotes[0];
 
-      mockCtx.prisma.note?.update = jest
+      mockCtx.prisma.note!.update = jest
         .fn()
         .mockResolvedValue(mockedRestoredNote);
 
