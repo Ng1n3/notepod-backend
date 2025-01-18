@@ -519,10 +519,10 @@ describe('Note Operation', () => {
         }
       );
 
-      console.log(
-        'Response from deleted Note: ',
-        JSON.stringify(res.body, null, 2)
-      );
+      // console.log(
+      //   'Response from deleted Note: ',
+      //   JSON.stringify(res.body, null, 2)
+      // );
 
       const result =
         res.body.kind === 'single' ? res.body.singleResult.data : null;
@@ -640,10 +640,10 @@ describe('Note Operation', () => {
         { contextValue: mockCtx }
       );
 
-      console.log(
-        'response from restore note: ',
-        JSON.stringify(res.body, null, 2)
-      );
+      // console.log(
+      //   'response from restore note: ',
+      //   JSON.stringify(res.body, null, 2)
+      // );
 
       const result =
         res.body.kind === 'single' ? res.body.singleResult.data : null;
