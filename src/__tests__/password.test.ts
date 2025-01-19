@@ -160,4 +160,79 @@ describe('Password Operations', () => {
       expect(mockCtx.prisma.password.create).toHaveBeenCalledTimes(1)
     });
   });
+
+  describe('Password Query', () => {
+    it('it should return all Passwords', async () => {
+      const mockPasswords = [
+        {
+          id: '1',
+          fieldname: 'Twitter',
+          email: 'test@example.com',
+          username: 'test1235',
+          password: 'test1234',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          fieldname: 'Facebook',
+          email: 'test@example.com',
+          username: 'test1235',
+          password: 'test1234',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        }
+      ];
+
+      mockCtx.prisma.password.findMany = jest.fn().mockResolvedValue(mockPasswords);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+        query GetPasssswords($isDeleted: Boolean!) {
+          getPasswords(isDeleted: $isDeleted) {
+            id
+            fieldname
+            password
+            isDeleted
+            username
+            email
+            deletedAt
+            updatedAt
+            user {
+              email
+              username
+            }
+          }
+        }
+          `,
+          variables: {
+            isDeleted: false,
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.getPasswords).toEqual(mockPasswords);
+      expect(mockCtx.prisma.password.findMany).toHaveBeenCalledWith({
+        where: { isDeleted: false },
+      });
+      expect(mockCtx.prisma.password.findMany).toHaveBeenCalledTimes(1);
+    });
+  });
 });
