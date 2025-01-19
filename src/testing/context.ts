@@ -17,7 +17,14 @@ export type MockContext = {
       findUnique: jest.Mock;
       findMany: jest.Mock;
       softDeleteTodo: jest.Mock;
-    }
+    };
+    password: {
+      create: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+      findUnique: jest.Mock;
+      findMany: jest.Mock;
+    };
     $disconnect: jest.Mock;
   };
   session: {
@@ -58,6 +65,13 @@ export function createMockContext(): MockContext {
         findUnique: jest.fn(),
         findMany: jest.fn(),
         softDeleteTodo: jest.fn(),
+      },
+      password: {
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
       },
       $disconnect: jest.fn().mockResolvedValue(undefined),
     },
