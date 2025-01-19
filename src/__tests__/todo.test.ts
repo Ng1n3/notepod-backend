@@ -353,9 +353,7 @@ describe('Todo Operation', () => {
         },
       };
 
-      mockCtx.prisma.todo.update = jest
-        .fn()
-        .mockResolvedValue(mockUpdateTodo);
+      mockCtx.prisma.todo.update = jest.fn().mockResolvedValue(mockUpdateTodo);
 
       const res = await server.executeOperation(
         {
@@ -381,7 +379,7 @@ describe('Todo Operation', () => {
             id: '1',
             title: 'Updated Title',
             body: 'Updated body content',
-            priority: "HIGH",
+            priority: 'HIGH',
           },
         },
         {
@@ -398,7 +396,7 @@ describe('Todo Operation', () => {
         data: {
           title: 'Updated Title',
           body: 'Updated body content',
-          priority: "HIGH"
+          priority: 'HIGH',
         },
       });
       expect(mockCtx.prisma.todo.update).toHaveBeenCalledTimes(1);
@@ -414,7 +412,7 @@ describe('Todo Operation', () => {
           body: 'First note body',
           isDeleted: false,
           dueDate: new Date().toISOString(),
-          priority: "HIGH",
+          priority: 'HIGH',
           deletedAt: null,
           updatedAt: new Date().toISOString(),
           user: {
@@ -428,7 +426,7 @@ describe('Todo Operation', () => {
           body: 'Second note body',
           isDeleted: false,
           dueDate: new Date().toISOString(),
-          priority: "LOW",
+          priority: 'LOW',
           deletedAt: null,
           updatedAt: new Date().toISOString(),
           user: {
@@ -446,7 +444,9 @@ describe('Todo Operation', () => {
       };
 
       // Mock the update operation
-      mockCtx.prisma.todo.update = jest.fn().mockResolvedValue(mockDeletedTodos);
+      mockCtx.prisma.todo.update = jest
+        .fn()
+        .mockResolvedValue(mockDeletedTodos);
 
       // Execute the soft delete mutation
       const res = await server.executeOperation(
@@ -506,7 +506,7 @@ describe('Todo Operation', () => {
           title: 'First Note',
           body: 'First note body',
           isDeleted: true,
-          priority: "LOW",
+          priority: 'LOW',
           dueDate: new Date().toISOString(),
           deletedAt: null,
           updatedAt: new Date().toISOString(),
@@ -521,7 +521,7 @@ describe('Todo Operation', () => {
           body: 'Second note body',
           isDeleted: false,
           deletedAt: null,
-          priority: "CRITICAL",
+          priority: 'CRITICAL',
           dueDate: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           user: {
@@ -567,14 +567,11 @@ describe('Todo Operation', () => {
       const result =
         res.body.kind === 'single' ? res.body.singleResult.data : null;
 
-
       expect(result?.deleteTodo).toEqual(mockDeletedTodo);
-
 
       expect(mockCtx.prisma.todo.delete).toHaveBeenCalledWith({
         where: { id: mockDeletedTodo.id },
       });
-
 
       expect(mockCtx.prisma.todo.delete).toHaveBeenCalledTimes(1);
     });
@@ -619,6 +616,87 @@ describe('Todo Operation', () => {
       // Verify we got an error response
       expect(errors).toBeDefined();
       expect(errors?.[0].message).toContain('Todo not found');
+    });
+  });
+
+  describe('Restore a todo', () => {
+    it('Should restore a deleted todo', async () => {
+      const mockTodos = [
+        {
+          id: '1',
+          title: 'First Note',
+          body: 'First note body',
+          isDeleted: true,
+          deletedAt: null,
+          dueDate: new Date().toISOString(),
+          priority: 'LOW',
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          title: 'Second Note',
+          body: 'Second note body',
+          isDeleted: false,
+          dueDate: new Date().toISOString(),
+          priority: 'HIGH',
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+      ];
+
+      const mockedRestoredTodo = mockTodos[0];
+
+      mockCtx.prisma.todo.update = jest
+        .fn()
+        .mockResolvedValue(mockedRestoredTodo);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+          mutation RestoreTodo($id: ID!) {
+            restoreTodo(id: $id) {
+              id
+              title
+              body
+              dueDate
+              priority
+              isDeleted
+              deletedAt
+              updatedAt
+              user {
+                email
+                username
+              }
+            }
+          }
+        `,
+          variables: {
+            id: mockedRestoredTodo.id,
+          },
+        },
+        { contextValue: mockCtx }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.restoreTodo).toEqual(mockedRestoredTodo);
+      expect(mockCtx.prisma.todo.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: {
+          isDeleted: false,
+          deletedAt: null,
+        },
+      });
+      expect(mockCtx.prisma.todo.update).toHaveBeenCalledTimes(1);
     });
   });
 });
