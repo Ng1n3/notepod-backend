@@ -67,6 +67,9 @@ describe('Todo Operation', () => {
                 },
               });
             },
+            deleteTodo: async (_parent, { id }, _: Mycontext) => {
+              return mockCtx.prisma.todo.delete({ where: { id } });
+            },
             restoreTodo: async (_parent, { id }, _: Mycontext) => {
               return mockCtx.prisma.todo.update({
                 where: { id },
@@ -492,6 +495,130 @@ describe('Todo Operation', () => {
 
       // Verify update was called exactly once
       expect(mockCtx.prisma.todo.update).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Delete a Todo', () => {
+    it('should remove the Todo from the database', async () => {
+      const mockTodos = [
+        {
+          id: '1',
+          title: 'First Note',
+          body: 'First note body',
+          isDeleted: true,
+          priority: "LOW",
+          dueDate: new Date().toISOString(),
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          title: 'Second Note',
+          body: 'Second note body',
+          isDeleted: false,
+          deletedAt: null,
+          priority: "CRITICAL",
+          dueDate: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+      ];
+
+      const mockDeletedTodo = mockTodos[0];
+
+      mockCtx.prisma.todo.delete = jest.fn().mockResolvedValue(mockDeletedTodo);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+        mutation DeleteTodo($id: ID!) {
+          deleteTodo(id: $id) {
+              id
+              title
+              body
+              isDeleted
+              deletedAt
+              priority
+              dueDate
+              updatedAt
+              user {
+                email
+                username
+              }
+            }
+        }
+        `,
+          variables: {
+            id: mockDeletedTodo.id,
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+
+      expect(result?.deleteTodo).toEqual(mockDeletedTodo);
+
+
+      expect(mockCtx.prisma.todo.delete).toHaveBeenCalledWith({
+        where: { id: mockDeletedTodo.id },
+      });
+
+
+      expect(mockCtx.prisma.todo.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle deletion of non-existent todo', async () => {
+      mockCtx.prisma.todo.delete = jest
+        .fn()
+        .mockRejectedValue(new Error('Todo not found'));
+
+      const res = await server.executeOperation(
+        {
+          query: `
+            mutation DeleteTodo($id: ID!) {
+              deleteTodo(id: $id) {
+                id
+                title
+                body
+                isDeleted
+                deletedAt
+                dueDate
+                priority
+                updatedAt
+                user {
+                  email
+                  username
+                }
+              }
+            }
+          `,
+          variables: {
+            id: 'non-existent-id',
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const errors =
+        res.body.kind === 'single' ? res.body.singleResult.errors : null;
+
+      // Verify we got an error response
+      expect(errors).toBeDefined();
+      expect(errors?.[0].message).toContain('Todo not found');
     });
   });
 });

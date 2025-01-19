@@ -519,11 +519,6 @@ describe('Note Operation', () => {
         }
       );
 
-      // console.log(
-      //   'Response from deleted Note: ',
-      //   JSON.stringify(res.body, null, 2)
-      // );
-
       const result =
         res.body.kind === 'single' ? res.body.singleResult.data : null;
 
