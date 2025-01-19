@@ -44,7 +44,7 @@ describe('Todo Operation', () => {
               deletedAt: String
               isDeleted: Boolean
             ): TodoType
-            updateTodo(id: ID!, title: String, body: String): TodoType
+            updateTodo(id: ID!, title: String, body: String, priority: String): TodoType
             softDeleteTodo(id: ID!): TodoType
             deleteTodo(id: ID!): TodoType
             restoreTodo(id: ID!): TodoType
@@ -288,6 +288,117 @@ describe('Todo Operation', () => {
         where: { id: mockTodo.id },
       });
       expect(mockCtx.prisma.todo.findUnique).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('should return null for non-existent note', async () => {
+    mockCtx.prisma.todo.findUnique = jest.fn().mockResolvedValue(null);
+
+    const res = await server.executeOperation(
+      {
+        query: `
+      query GetTodo($id: ID!) {
+        getTodo(id: $id) {
+          id
+         title
+         body
+        isDeleted
+        priority
+        dueDate
+        deletedAt
+        updatedAt
+        user {
+            email
+            username
+        }
+        }
+      }
+        `,
+        variables: {
+          id: 'non-existent-id',
+        },
+      },
+      {
+        contextValue: mockCtx,
+      }
+    );
+
+    const result =
+      res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+    expect(result?.getTodo).toBeNull();
+    expect(mockCtx.prisma.todo.findUnique).toHaveBeenCalledTimes(1);
+    expect(mockCtx.prisma.todo.findUnique).toHaveBeenCalledWith({
+      where: { id: 'non-existent-id' },
+    });
+  });
+
+  describe('update Todo mutation', () => {
+    it('should update a todo successfully', async () => {
+      const mockUpdateTodo = {
+        id: '1',
+        title: 'This is a test Todo',
+        body: 'This is a test todo for the body',
+        priority: 'HIGH',
+        dueDate: new Date().toISOString(),
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: new Date().toISOString(),
+        user: {
+          email: 'test@example.com',
+          username: 'testuser',
+        },
+      };
+
+      mockCtx.prisma.todo.update = jest
+        .fn()
+        .mockResolvedValue(mockUpdateTodo);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+            mutation UpdateTodo($id: ID!, $title: String, $body: String,  $priority: String) {
+              updateTodo(id: $id, title: $title, body: $body, priority: $priority) {
+                id
+                title
+                body
+                isDeleted
+                deletedAt
+                priority
+                dueDate
+                updatedAt
+                user {
+                  email
+                  username
+                }
+              }
+            }
+          `,
+          variables: {
+            id: '1',
+            title: 'Updated Title',
+            body: 'Updated body content',
+            priority: "HIGH",
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.updateTodo).toEqual(mockUpdateTodo);
+      expect(mockCtx.prisma.todo.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: {
+          title: 'Updated Title',
+          body: 'Updated body content',
+          priority: "HIGH"
+        },
+      });
+      expect(mockCtx.prisma.todo.update).toHaveBeenCalledTimes(1);
     });
   });
 });

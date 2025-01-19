@@ -305,8 +305,8 @@ describe('Note Operation', () => {
       res.body.kind === 'single' ? res.body.singleResult.data : null;
 
     expect(result?.getNote).toBeNull();
-    expect(mockCtx.prisma.note?.findUnique).toHaveBeenCalledTimes(1);
-    expect(mockCtx.prisma.note?.findUnique).toHaveBeenCalledWith({
+    expect(mockCtx.prisma.note.findUnique).toHaveBeenCalledTimes(1);
+    expect(mockCtx.prisma.note.findUnique).toHaveBeenCalledWith({
       where: { id: 'non-existent-id' },
     });
   });
@@ -639,11 +639,6 @@ describe('Note Operation', () => {
         },
         { contextValue: mockCtx }
       );
-
-      // console.log(
-      //   'response from restore note: ',
-      //   JSON.stringify(res.body, null, 2)
-      // );
 
       const result =
         res.body.kind === 'single' ? res.body.singleResult.data : null;
