@@ -401,4 +401,97 @@ describe('Todo Operation', () => {
       expect(mockCtx.prisma.todo.update).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Soft delete Todo', () => {
+    it('should soft delete a Todo successfully', async () => {
+      const mockTodos = [
+        {
+          id: '1',
+          title: 'First Note',
+          body: 'First note body',
+          isDeleted: false,
+          dueDate: new Date().toISOString(),
+          priority: "HIGH",
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          title: 'Second Note',
+          body: 'Second note body',
+          isDeleted: false,
+          dueDate: new Date().toISOString(),
+          priority: "LOW",
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+      ];
+
+      const mockDeletedTodos = {
+        ...mockTodos[0],
+        isDeleted: true,
+        deletedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Mock the update operation
+      mockCtx.prisma.todo.update = jest.fn().mockResolvedValue(mockDeletedTodos);
+
+      // Execute the soft delete mutation
+      const res = await server.executeOperation(
+        {
+          query: `
+            mutation SoftDeleteTodo($id: ID!) {
+              softDeleteTodo(id: $id) {
+                id
+                title
+                body
+                isDeleted
+                deletedAt
+                priority
+                dueDate
+                updatedAt
+                user {
+                  email
+                  username
+                }
+              }
+            }
+          `,
+          variables: {
+            id: '1',
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      // Verify the response matches the mock deleted note
+      expect(result?.softDeleteTodo).toEqual(mockDeletedTodos);
+
+      // Verify the update was called with correct parameters
+      expect(mockCtx.prisma.todo.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: {
+          isDeleted: true,
+          deletedAt: expect.any(String),
+        },
+      });
+
+      // Verify update was called exactly once
+      expect(mockCtx.prisma.todo.update).toHaveBeenCalledTimes(1);
+    });
+  });
 });
