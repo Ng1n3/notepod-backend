@@ -396,7 +396,6 @@ describe('Password Operations', () => {
         }
       );
 
-
       const result =
         res.body.kind === 'single' ? res.body.singleResult.data : null;
 
@@ -509,4 +508,207 @@ describe('Password Operations', () => {
     });
   });
 
+  describe('Delete a Password', () => {
+    it('should remove the Password from the database', async () => {
+      const mockPasswords = [
+        {
+          id: '1',
+          fieldname: 'Twitter',
+          email: 'test@example.com',
+          username: 'test1235',
+          password: 'test1234',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          fieldname: 'Facebook',
+          email: 'test@example.com',
+          username: 'test1235',
+          password: 'test1234',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+      ];
+
+      const mockDeletedPassword = mockPasswords[0];
+
+      mockCtx.prisma.password.delete = jest
+        .fn()
+        .mockResolvedValue(mockDeletedPassword);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+        mutation DeletePassword($id: ID!) {
+          deletePassword(id: $id) {
+              id
+                fieldname
+                email
+                isDeleted
+                deletedAt
+                username
+                password
+                updatedAt
+                user {
+                  email
+                  username
+                }
+            }
+        }
+        `,
+          variables: {
+            id: mockDeletedPassword.id,
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.deletePassword).toEqual(mockDeletedPassword);
+
+      expect(mockCtx.prisma.password.delete).toHaveBeenCalledWith({
+        where: { id: mockDeletedPassword.id },
+      });
+
+      expect(mockCtx.prisma.password.delete).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle deletion of non-existent Password', async () => {
+      mockCtx.prisma.password.delete = jest
+        .fn()
+        .mockRejectedValue(new Error('Password not found'));
+
+      const res = await server.executeOperation(
+        {
+          query: `
+            mutation DeletePassword($id: ID!) {
+              deletePassword(id: $id) {
+                id
+                fieldname
+                email
+                isDeleted
+                deletedAt
+                username
+                password
+                updatedAt
+                user {
+                  email
+                  username
+                }
+              }
+            }
+          `,
+          variables: {
+            id: 'non-existent-id',
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const errors =
+        res.body.kind === 'single' ? res.body.singleResult.errors : null;
+
+      // Verify we got an error response
+      expect(errors).toBeDefined();
+      expect(errors?.[0].message).toContain('Password not found');
+    });
+  });
+
+  describe('Restore a Passsword', () => {
+    it('Should restore a deleted Passsword', async () => {
+      const mockPassswords = [
+        {
+          id: '1',
+          fieldname: 'Twitter',
+          email: 'test@example.com',
+          username: 'test1235',
+          password: 'test1234',
+          isDeleted: true,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          fieldname: 'Facebook',
+          email: 'test@example.com',
+          username: 'test1235',
+          password: 'test1234',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+      ];
+
+      const mockRestoredPassword = mockPassswords[0];
+
+      mockCtx.prisma.password.update = jest
+        .fn()
+        .mockResolvedValue(mockRestoredPassword);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+          mutation RestorePassword($id: ID!) {
+            restorePassword(id: $id) {
+              id
+                fieldname
+                email
+                isDeleted
+                deletedAt
+                username
+                password
+                updatedAt
+                user {
+                  email
+                  username
+                }
+            }
+          }
+        `,
+          variables: {
+            id: mockRestoredPassword.id,
+          },
+        },
+        { contextValue: mockCtx }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.restorePassword).toEqual(mockRestoredPassword);
+      expect(mockCtx.prisma.password.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: {
+          isDeleted: false,
+          deletedAt: null,
+        },
+      });
+      expect(mockCtx.prisma.password.update).toHaveBeenCalledTimes(1);
+    });
+  });
 });
