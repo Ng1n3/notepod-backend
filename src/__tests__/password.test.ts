@@ -341,4 +341,76 @@ describe('Password Operations', () => {
       where: { id: 'non-existent-id' },
     });
   });
+
+  describe('update Password mutation', () => {
+    it('should update a Password successfully', async () => {
+      const mockupdatePassword = {
+        id: '1',
+        fieldname: 'Telegram',
+        email: 'test@example.com',
+        username: 'test1235',
+        password: 'test1234',
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: new Date().toISOString(),
+        user: {
+          email: 'test@example.com',
+          username: 'testuser',
+        },
+      };
+
+      mockCtx.prisma.password.update = jest
+        .fn()
+        .mockResolvedValue(mockupdatePassword);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+            mutation UpdatePassword($id: ID!, $fieldname: String, $email: String, $username: String, $password: String) {
+              updatePassword(id: $id, fieldname: $fieldname, email: $email, username: $username, password: $password) {
+                id
+                fieldname
+                email
+                isDeleted
+                deletedAt
+                username
+                password
+                updatedAt
+                user {
+                  email
+                  username
+                }
+              }
+            }
+          `,
+          variables: {
+            id: mockupdatePassword.id,
+            fieldname: mockupdatePassword.fieldname,
+            username: mockupdatePassword.username,
+            password: mockupdatePassword.password,
+            email: mockupdatePassword.email,
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.updatePassword).toEqual(mockupdatePassword);
+      expect(mockCtx.prisma.password.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: {
+          fieldname: 'Telegram',
+          username: mockupdatePassword.username,
+          password: mockupdatePassword.password,
+          email: mockupdatePassword.email,
+        },
+      });
+      expect(mockCtx.prisma.password.update).toHaveBeenCalledTimes(1);
+    });
+  });
 });
