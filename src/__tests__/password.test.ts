@@ -301,7 +301,7 @@ describe('Password Operations', () => {
   });
 
   it('should return null for non-existent Password', async () => {
-    mockCtx.prisma.todo.findUnique = jest.fn().mockResolvedValue(null);
+    mockCtx.prisma.password.findUnique = jest.fn().mockResolvedValue(null);
 
     const res = await server.executeOperation(
       {
@@ -413,4 +413,100 @@ describe('Password Operations', () => {
       expect(mockCtx.prisma.password.update).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Soft delete Password', () => {
+    it('should soft delete a Password successfully', async () => {
+      const mockPasswords = [
+        {
+          id: '1',
+          fieldname: 'Twitter',
+          email: 'test@example.com',
+          username: 'test1235',
+          password: 'test1234',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+        {
+          id: '2',
+          fieldname: 'Facebook',
+          email: 'test@example.com',
+          username: 'test1235',
+          password: 'test1234',
+          isDeleted: false,
+          deletedAt: null,
+          updatedAt: new Date().toISOString(),
+          user: {
+            email: 'test@example.com',
+            username: 'testuser',
+          },
+        },
+      ];
+
+      const mockDeletedPassword = {
+        ...mockPasswords[0],
+        isDeleted: true,
+        deletedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Mock the update operation
+      mockCtx.prisma.password.update = jest
+        .fn()
+        .mockResolvedValue(mockDeletedPassword);
+
+      // Execute the soft delete mutation
+      const res = await server.executeOperation(
+        {
+          query: `
+            mutation SOftDeletePassword($id: ID!) {
+              softDeletePassword(id: $id) {
+                id
+                fieldname
+                email
+                isDeleted
+                deletedAt
+                username
+                password
+                updatedAt
+                user {
+                  email
+                  username
+                }
+              }
+            }
+          `,
+          variables: {
+            id: '1',
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      // Verify the response matches the mock deleted note
+      expect(result?.softDeletePassword).toEqual(mockDeletedPassword);
+
+      // Verify the update was called with correct parameters
+      expect(mockCtx.prisma.password.update).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: {
+          isDeleted: true,
+          deletedAt: expect.any(String),
+        },
+      });
+
+      // Verify update was called exactly once
+      expect(mockCtx.prisma.password.update).toHaveBeenCalledTimes(1);
+    });
+  });
+
 });
