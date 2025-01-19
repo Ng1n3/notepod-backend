@@ -294,7 +294,7 @@ describe('Todo Operation', () => {
     });
   });
 
-  it('should return null for non-existent note', async () => {
+  it('should return null for non-existent Todo', async () => {
     mockCtx.prisma.todo.findUnique = jest.fn().mockResolvedValue(null);
 
     const res = await server.executeOperation(

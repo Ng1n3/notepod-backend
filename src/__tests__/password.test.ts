@@ -154,10 +154,11 @@ describe('Password Operations', () => {
         }
       );
 
-      const result = res.body.kind === 'single' ? res.body.singleResult.data : null;
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
 
-      expect(result?.createPassword).toEqual(mockPassword)
-      expect(mockCtx.prisma.password.create).toHaveBeenCalledTimes(1)
+      expect(result?.createPassword).toEqual(mockPassword);
+      expect(mockCtx.prisma.password.create).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -191,10 +192,12 @@ describe('Password Operations', () => {
             email: 'test@example.com',
             username: 'testuser',
           },
-        }
+        },
       ];
 
-      mockCtx.prisma.password.findMany = jest.fn().mockResolvedValue(mockPasswords);
+      mockCtx.prisma.password.findMany = jest
+        .fn()
+        .mockResolvedValue(mockPasswords);
 
       const res = await server.executeOperation(
         {
@@ -233,6 +236,109 @@ describe('Password Operations', () => {
         where: { isDeleted: false },
       });
       expect(mockCtx.prisma.password.findMany).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Password Query', () => {
+    it('returns a single Password by id', async () => {
+      const mockPassword = {
+        id: '1',
+        fieldname: 'Twitter',
+        email: 'test@example.com',
+        username: 'test1235',
+        password: 'test1234',
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: new Date().toISOString(),
+        user: {
+          email: 'test@example.com',
+          username: 'testuser',
+        },
+      };
+
+      mockCtx.prisma.password.findUnique = jest
+        .fn()
+        .mockResolvedValue(mockPassword);
+
+      const res = await server.executeOperation(
+        {
+          query: `
+          query GetPassword($id: ID!) {
+          getPassword(id: $id) {
+            id
+            fieldname
+            password
+            isDeleted
+            username
+            email
+            deletedAt
+            updatedAt
+            user {
+              email
+              username
+            }
+          }
+        }
+          `,
+          variables: {
+            id: mockPassword.id,
+          },
+        },
+        {
+          contextValue: mockCtx,
+        }
+      );
+
+      const result =
+        res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+      expect(result?.getPassword).toEqual(mockPassword);
+      expect(mockCtx.prisma.password.findUnique).toHaveBeenCalledWith({
+        where: { id: mockPassword.id },
+      });
+      expect(mockCtx.prisma.password.findUnique).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('should return null for non-existent Password', async () => {
+    mockCtx.prisma.todo.findUnique = jest.fn().mockResolvedValue(null);
+
+    const res = await server.executeOperation(
+      {
+        query: `
+      query GetPassword($id: ID!) {
+        getPassword(id: $id) {
+            id
+            fieldname
+            password
+            isDeleted
+            username
+            email
+            deletedAt
+            updatedAt
+            user {
+              email
+              username
+            }
+        }
+      }
+        `,
+        variables: {
+          id: 'non-existent-id',
+        },
+      },
+      {
+        contextValue: mockCtx,
+      }
+    );
+
+    const result =
+      res.body.kind === 'single' ? res.body.singleResult.data : null;
+
+    expect(result?.getPassword).toBeNull();
+    expect(mockCtx.prisma.password.findUnique).toHaveBeenCalledTimes(1);
+    expect(mockCtx.prisma.password.findUnique).toHaveBeenCalledWith({
+      where: { id: 'non-existent-id' },
     });
   });
 });
