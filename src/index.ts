@@ -12,6 +12,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import config from './config';
 import { getMyPrismaClient } from './db';
+import { DatabaseError } from './errors/DatabaseError';
 import { getSchema } from './graphql/Schema';
 import { Mycontext } from './interfaces';
 import { isProd } from './util';
@@ -68,13 +69,17 @@ const main = async () => {
       const prisma = await getMyPrismaClient();
       await prisma.$queryRaw`SELECT 1`;
 
+      await RedisClient.ping();
+
       res.status(200).json({
         status: 'Health',
         uptime: process.uptime(),
         message: 'OK',
         timeStamp: new Date(),
       });
-    } catch (error) {}
+    } catch (error) {
+      throw new DatabaseError('Database Error');
+    }
   });
   app.use(
     '/graphql',
