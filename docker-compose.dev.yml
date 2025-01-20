@@ -1,0 +1,81 @@
+services:
+  db: 
+    container_name: database
+    image: postgres:17
+    ports:
+      - '5434:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+    networks:
+      - backend
+
+  redis:
+    container_name: redis_cache
+    image: redis:alpine
+    ports:
+      - '6379:6379'
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 30
+  
+  api:
+    build:
+      context: .
+      target: development
+    environment:
+      - name=value
+      - DATABASE_URL=${DATABASE_URL_DOCKER}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PORT=${PORT}
+      - REDIS_URL=${REDIS_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+    command: sh -c "chmod +x /app/init-db.sh && sh /app/init-db.sh && npx prisma generate && pnpm install && pnpm run start:ts"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      # - ./init-db.sh:/app/init-db.sh
+    ports:
+      - '4000:4000'
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/graphql/healthcheck"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+    networks:
+      - backend
+
+  dozzle:
+    container_name: dozzle_dev
+    image: amir20/dozzle:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "9090:8080"
+    networks:
+      - backend
+      
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  pgdata:
+    driver: local

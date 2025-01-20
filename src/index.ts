@@ -19,7 +19,9 @@ import { isProd } from './util';
 dotenv.config();
 
 const app: Application = express();
-const RedisClient = new Redis();
+const RedisClient = new Redis(
+  process.env.REDIS_URL || 'redis://localhost:6379'
+);
 const PORT: string = process.env.PORT!;
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, //15minutes
@@ -61,6 +63,19 @@ const main = async () => {
   });
 
   await server.start();
+  app.get('/healthcheck', async (_, res) => {
+    try {
+      const prisma = await getMyPrismaClient();
+      await prisma.$queryRaw`SELECT 1`;
+
+      res.status(200).json({
+        status: 'Health',
+        uptime: process.uptime(),
+        message: 'OK',
+        timeStamp: new Date(),
+      });
+    } catch (error) {}
+  });
   app.use(
     '/graphql',
     cors({
@@ -85,6 +100,14 @@ const main = async () => {
     );
   });
 };
+
+RedisClient.on('error', (error) => {
+  console.error('Redis connection error:', error);
+});
+
+RedisClient.on('connect', () => {
+  console.log('Successfully connected to Redis');
+});
 
 main().catch((err) => {
   console.error(err);

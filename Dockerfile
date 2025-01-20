@@ -17,7 +17,7 @@ COPY package.json pnpm-lock.yaml ./
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-RUN pnpm install --frozen-lockfle --prod
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
@@ -47,4 +47,4 @@ USER node
 
 EXPOSE 4000
 
-CMD [ "pnpm", "dev" ]
+CMD [ "pnpm", "run", "start:ts" ]
