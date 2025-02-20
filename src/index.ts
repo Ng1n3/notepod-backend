@@ -26,7 +26,8 @@ const RedisClient = new Redis(
 const PORT: string = process.env.PORT!;
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, //15minutes
-  max: 100, // limit each ip to 100 requests per windowMs
+  max: 200, // limit each ip to 100 requests per windowMs
+  message: 'Too many requests, please try again later',
 });
 
 app.use(helmet());
@@ -55,6 +56,24 @@ app.use(
   }) as any
 );
 
+app.get('/healthcheck', async (_, res) => {
+  try {
+    const prisma = await getMyPrismaClient();
+    await prisma.$queryRaw`SELECT 1`;
+
+    await RedisClient.ping();
+
+    res.status(200).json({
+      status: 'Health',
+      uptime: process.uptime(),
+      message: 'OK',
+      timeStamp: new Date(),
+    });
+  } catch (error) {
+    throw new DatabaseError('Database Error');
+  }
+});
+
 const main = async () => {
   const schema = getSchema();
   const prisma = await getMyPrismaClient();
@@ -64,23 +83,7 @@ const main = async () => {
   });
 
   await server.start();
-  app.get('/healthcheck', async (_, res) => {
-    try {
-      const prisma = await getMyPrismaClient();
-      await prisma.$queryRaw`SELECT 1`;
 
-      await RedisClient.ping();
-
-      res.status(200).json({
-        status: 'Health',
-        uptime: process.uptime(),
-        message: 'OK',
-        timeStamp: new Date(),
-      });
-    } catch (error) {
-      throw new DatabaseError('Database Error');
-    }
-  });
   app.use(
     '/graphql',
     cors({

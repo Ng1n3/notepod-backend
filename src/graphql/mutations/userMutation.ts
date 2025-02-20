@@ -340,6 +340,7 @@ export const userMutation = (t: any) => {
           });
         });
 
+        console.log('logged out successfully');
         logger.info('User logged out successfully', {
           resolver: 'logoutUser',
           userId: context.session.userId,

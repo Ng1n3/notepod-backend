@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "pnpm build && node dist/index.js",
-    "start:ts": "ts-node src/index.ts",
+    "start:ts": "nodemon src/index.ts",
     "build": "tsc",
     "build:watch": "tsc -w",
     "dev": "concurrently \"pnpm run build:watch\" \"nodemon dist/index.js\"",

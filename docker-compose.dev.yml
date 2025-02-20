@@ -55,7 +55,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/graphql/healthcheck"]
+      test: ["CMD", "curl", "-f", "http://localhost:4000/healthcheck"]
       interval: 1m30s
       timeout: 30s
       retries: 5
